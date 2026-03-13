@@ -3,3 +3,54 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+**/.DS_Store
+.DS_Store
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+docs/
+README.md
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+.idea
+
+# Build outputs
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Scripts
+*.sh
+
