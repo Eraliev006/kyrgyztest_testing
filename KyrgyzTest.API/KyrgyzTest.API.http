@@ -1,0 +1,6 @@
+@KyrgyzTest.API_HostAddress = http://localhost:5039
+
+GET {{KyrgyzTest.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

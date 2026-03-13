@@ -1,0 +1,7 @@
+﻿services:
+  kyrgyztest.api:
+    image: kyrgyztest.api
+    build:
+      context: .
+      dockerfile: KyrgyzTest.API/Dockerfile
+
