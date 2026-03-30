@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KyrgyzTest.Core", "KyrgyzTe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KyrgyzTest.Application", "KyrgyzTest.Application\KyrgyzTest.Application.csproj", "{42BAE58C-1339-47DA-93E1-FDBA4AFF9D42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KyrgyzTest.Infrastructure", "KyrgyzTest.Infrastructure  \KyrgyzTest.Infrastructure.csproj", "{347D0489-8984-4E12-B2CE-06B4419130D9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KyrgyzTest.Infrastructure", "KyrgyzTest.Infrastructure\KyrgyzTest.Infrastructure.csproj", "{347D0489-8984-4E12-B2CE-06B4419130D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
