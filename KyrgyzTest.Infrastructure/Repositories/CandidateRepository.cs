@@ -17,4 +17,10 @@ public class CandidateRepository : ICandidateRepository
     {
         return await _context.Candidates.FirstOrDefaultAsync(c => c.ExamCode == examCode);
     }
+    public async Task<Candidate> CreateAsync(Candidate candidate)
+    {
+        _context.Candidates.Add(candidate);
+        await _context.SaveChangesAsync();
+        return candidate;
+    }
 }

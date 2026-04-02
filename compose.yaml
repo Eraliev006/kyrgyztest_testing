@@ -11,8 +11,12 @@
     build:
       context: .
       dockerfile: KyrgyzTest.API/Dockerfile
-
+    env_file:
+      - '.env'
     ports:
       - '8000:8080'
     depends_on:
       - kyrgyztest_database
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=kyrgyztest_database;Port=5432;Database=kyrgyztest;Username=postgres;Password=postgres

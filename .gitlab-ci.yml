@@ -1,0 +1,31 @@
+stages:
+  - build
+  - test
+  - deploy
+    
+build:
+  stage: build
+  image: mcr.microsoft.com/dotnet/core/sdk:8.0
+  script:
+    - dotnet restore
+    - dotnet build --no-restore
+  only:
+    - develop
+    - production
+
+test:
+  stage: test
+  image: mcr.microsoft.com/dotnet/core/sdk:8.0
+  script:
+    - dotnet test --no-build
+  only:
+    - develop
+    - production
+  
+deploy:
+  stage: deploy
+  image: mcr.microsoft.com/dotnet/core/sdk:8.0
+  only:
+    - production
+  tags:
+    - self-hosted

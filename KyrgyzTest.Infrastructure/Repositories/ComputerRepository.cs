@@ -35,4 +35,9 @@ public class ComputerRepository : IComputerRepository
     {
         return await _context.Computers.Where(c => c.Status == ComputerStatus.Free).ToListAsync();
     }
+    
+    public async Task<List<Computer>> GetAllComputersAsync()
+    {
+        return await _context.Computers.ToListAsync();
+    }
 }
