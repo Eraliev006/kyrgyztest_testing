@@ -2,10 +2,10 @@ stages:
   - build
   - test
   - deploy
-    
+
 build:
   stage: build
-  image: mcr.microsoft.com/dotnet/core/sdk:8.0
+  image: mcr.microsoft.com/dotnet/sdk:8.0
   script:
     - dotnet restore
     - dotnet build --no-restore
@@ -15,16 +15,18 @@ build:
 
 test:
   stage: test
-  image: mcr.microsoft.com/dotnet/core/sdk:8.0
+  image: mcr.microsoft.com/dotnet/sdk:8.0
   script:
     - dotnet test --no-build
   only:
     - develop
     - production
-  
+
 deploy:
   stage: deploy
-  image: mcr.microsoft.com/dotnet/core/sdk:8.0
+  script:
+    - docker-compose down
+    - docker-compose up --build -d
   only:
     - production
   tags:

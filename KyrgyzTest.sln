@@ -5,7 +5,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F89011B8-12B2-42C5-8346-695A3F9FEBC7}"
 	ProjectSection(SolutionItems) = preProject
 		compose.yaml = compose.yaml
-		gitlab-ci.yml = gitlab-ci.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KyrgyzTest.Core", "KyrgyzTest.Core\KyrgyzTest.Core.csproj", "{244A1B69-5DB4-4F18-BDD5-85494FC41972}"
