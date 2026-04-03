@@ -1,3 +1,4 @@
+using KyrgyzTest.API;
 using KyrgyzTest.API.Extensions;
 using KyrgyzTest.API.Hubs;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 
 var app = builder.Build();
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -40,4 +43,5 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.MapControllers();
 app.MapHub<StationHub>("/hub/station");
+app.UseStaticFiles();
 app.Run();

@@ -15,7 +15,8 @@ public static class RepositoryExtension
         services.AddScoped<IComputerRepository, ComputerRepository>();
         services.AddScoped<IExamService, ExamService>();
         services.AddScoped<IComputerService, ComputerService>();
-
+        services.AddScoped<IExamService, ExamService>();
+        
         return services;
     } 
 }

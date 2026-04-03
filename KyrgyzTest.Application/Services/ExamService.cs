@@ -2,6 +2,7 @@ using KyrgyzTest.Application.DTOs;
 using KyrgyzTest.Application.Interfaces;
 using KyrgyzTest.Core.Entities;
 using KyrgyzTest.Core.Enums;
+using KyrgyzTest.Core.Exceptions;
 using KyrgyzTest.Core.Interfaces;
 
 namespace KyrgyzTest.Application.Services;
@@ -51,13 +52,13 @@ public class ExamService: IExamService
         
         var existingSession = await _examSessionRepository.GetByExamCodeAsync(examCode);
         if (existingSession != null)
-            throw new Exception("Computer already has an active session");
+            throw new BusinessException("Computer already has an active session");
         
         var freeComputers = await _computerRepository.GetAllFreeComputersAsync();
         var computer = freeComputers.FirstOrDefault();
         
         if (computer == null)
-            throw new Exception("No free computers available");
+            throw new BusinessException("No free computers available");
 
         var examSession = new ExamSession
         {
@@ -76,6 +77,48 @@ public class ExamService: IExamService
             ExamCode = examSession.ExamCode,
             StationNumber = examSession.StationNumber,
             StartAt = examSession.StartAt
+        };
+    }
+
+    public async Task<ExamLoginResponseDto> LoginAsync(ExamLoginDto examLogin)
+    {
+        var existingExamSession = await _examSessionRepository.GetByExamCodeAsync(examLogin.ExamCode);
+        
+        if (existingExamSession == null)
+            throw new NotFoundException("Invalid exam code");
+        
+        if (existingExamSession.StationNumber != examLogin.StationNumber)
+            throw new BusinessException("Invalid station number");
+        
+        if (existingExamSession.IsCompleted)
+            throw new BusinessException("Exam session is already completed");
+        
+        var candidate = await _candidateRepository.GetByExamCodeAsync(examLogin.ExamCode);
+        
+        return new ExamLoginResponseDto
+        {
+            ExamCode = existingExamSession.ExamCode,
+            FullName = candidate.FullName,
+            StationNumber = existingExamSession.StationNumber,
+            StartAt = existingExamSession.StartAt
+        };   
+    }
+
+    public async Task<ExamLoginResponseDto> GetSessionAsync(string examCode)
+    {
+        var session = await _examSessionRepository.GetByExamCodeAsync(examCode);
+        
+        if (session == null)
+            throw new NotFoundException("Exam session not found");
+        
+        var candidate = await _candidateRepository.GetByExamCodeAsync(examCode);
+        
+        return new ExamLoginResponseDto
+        {
+            ExamCode = session.ExamCode,
+            FullName = candidate.FullName,
+            StationNumber = session.StationNumber,
+            StartAt = session.StartAt
         };
     }
 }
