@@ -41,12 +41,14 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSwagger();
 app.UseSwaggerUI();
-app.MapControllers();
-app.MapHub<StationHub>("/hub/station");
+
 app.UseStaticFiles();
 app.UseCors(policy => policy
     .AllowAnyHeader()
     .AllowAnyMethod()
     .AllowCredentials()
     .WithOrigins("http://localhost:5173"));
+
+app.MapControllers();
+app.MapHub<StationHub>("/hub/station");
 app.Run();
