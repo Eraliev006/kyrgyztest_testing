@@ -6,38 +6,48 @@ using Microsoft.EntityFrameworkCore;
 
 namespace KyrgyzTest.Infrastructure.Repositories;
 
-public class ComputerRepository : IComputerRepository
+public class ComputerRepository(AppDbContext context) : IComputerRepository
 {
-    private readonly AppDbContext _context;
 
-    public ComputerRepository(AppDbContext context)
+    public async Task<Computer?> GetByComputerIdAsync(Guid id)
     {
-        _context = context;
-    }
-
-    public async Task<Computer?> GetByStationNumberAsync(int stationNumber)
-    {
-        return await _context.Computers.FirstOrDefaultAsync(c => c.StationNumber == stationNumber);
+        return await context.Computers.FirstOrDefaultAsync(c => c.Id == id);
     }
     
     public async Task<Computer?> UpdateComputerStatusAsync(Guid id, ComputerStatus status)
     {
-        Computer? computer = await _context.Computers.FirstOrDefaultAsync(c => c.Id == id);
+        Computer? computer = await context.Computers.FirstOrDefaultAsync(c => c.Id == id);
         if (computer is not null)
         {
             computer.Status = status;
         }
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return computer;
     }
 
     public async Task<List<Computer>> GetAllFreeComputersAsync()
     {
-        return await _context.Computers.Where(c => c.Status == ComputerStatus.Free).ToListAsync();
+        return await context.Computers.Where(c => c.Status == ComputerStatus.Free).ToListAsync();
     }
     
     public async Task<List<Computer>> GetAllComputersAsync()
     {
-        return await _context.Computers.ToListAsync();
+        return await context.Computers.ToListAsync();
+    }
+    
+    public async Task<Computer?> GetAndReserveFreeComputerAsync()
+    {
+        var computer = await context.Computers
+            .Where(c => c.Status == ComputerStatus.Free)
+            .FirstOrDefaultAsync();
+
+        if (computer == null)
+            return null;
+
+        computer.Status = ComputerStatus.Occupied;
+
+        await context.SaveChangesAsync();
+
+        return computer;
     }
 }
