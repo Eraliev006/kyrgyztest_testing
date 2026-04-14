@@ -48,7 +48,7 @@ namespace KyrgyzTest.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Candidates");
+                    b.ToTable("Candidates", (string)null);
                 });
 
             modelBuilder.Entity("KyrgyzTest.Core.Entities.Computer", b =>
@@ -68,7 +68,7 @@ namespace KyrgyzTest.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Computers");
+                    b.ToTable("Computers", (string)null);
 
                     b.HasData(
                         new
@@ -444,7 +444,7 @@ namespace KyrgyzTest.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ExamSessions");
+                    b.ToTable("ExamSessions", (string)null);
                 });
 #pragma warning restore 612, 618
         }

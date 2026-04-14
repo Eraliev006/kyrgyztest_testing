@@ -12,6 +12,12 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.9" />
+      <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.17.0" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.1.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Services\JwtService.cs" />
     </ItemGroup>
 
 </Project>
