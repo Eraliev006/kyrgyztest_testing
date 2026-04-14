@@ -15,10 +15,6 @@ Dockerfile
 docker-compose.yml
 .dockerignore
 
-# Documentation
-docs/
-README.md
-
 # IDE
 .vs/
 .vscode/
