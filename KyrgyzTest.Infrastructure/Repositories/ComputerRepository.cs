@@ -50,4 +50,28 @@ public class ComputerRepository(AppDbContext context) : IComputerRepository
 
         return computer;
     }
+    
+    public async Task<Computer?> GetByDeviceIdAsync(string deviceId)
+    {
+        return await context.Computers
+            .FirstOrDefaultAsync(c => c.DeviceId == deviceId);
+    }
+    public async Task<Computer> RegisterPendingComputerAsync(Computer computer)
+    {
+        context.Computers.Add(computer);
+        await context.SaveChangesAsync();
+        return computer;
+    }
+    public async Task<Computer?> ApproveComputerAsync(Guid id, int stationNumber)
+    {
+        var computer = await context.Computers.FindAsync(id);
+        if (computer != null)
+        {
+            computer.IsTrusted = true;
+            computer.StationNumber = stationNumber;
+            computer.Status = ComputerStatus.Free;
+            await context.SaveChangesAsync();
+        }
+        return computer;
+    }
 }

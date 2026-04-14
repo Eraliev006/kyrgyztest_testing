@@ -11,4 +11,8 @@ public interface IComputerRepository
     public Task<Computer?> UpdateComputerStatusAsync(Guid id, ComputerStatus status);
     public Task<List<Computer>> GetAllComputersAsync();
     public Task<Computer?> GetAndReserveFreeComputerAsync();
+    
+    public Task<Computer?> GetByDeviceIdAsync(string deviceId);
+    public Task<Computer> RegisterPendingComputerAsync(Computer computer);
+    public Task<Computer?> ApproveComputerAsync(Guid id, int stationNumber);
 }
