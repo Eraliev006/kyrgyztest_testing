@@ -5,9 +5,7 @@ namespace KyrgyzTest.Core.Entities;
 public class Candidate
 {
     public Guid Id { get; set; }
-    public string FullName { get; set; }
-    public string ExamCode  { get; set; }
-    public string PassportNumber { get; set; }
-    public DateTime RegisteredAt { get; set; }
-    public CandidateCategory Category { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Inn { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
