@@ -19,4 +19,5 @@
       - kyrgyztest_database
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:8080
       - ConnectionStrings__DefaultConnection=Host=kyrgyztest_database;Port=5432;Database=kyrgyztest;Username=postgres;Password=postgres
