@@ -2,7 +2,7 @@ using KyrgyzTest.Core.Enums;
 
 namespace KyrgyzTest.Core.Entities;
 
-public class User
+public class Users
 {
     public Guid Id { get; set; }
     public string FullName { get; set; } = string.Empty;
