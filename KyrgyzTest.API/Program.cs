@@ -1,16 +1,15 @@
 using KyrgyzTest.API;
 using KyrgyzTest.API.Extensions;
-using KyrgyzTest.API.Hubs;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDatabaseConnection(builder.Configuration);
 builder.Services.AddRepositories();
+builder.Services.AddServices();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSignalR();
 
 builder.Services.AddCors(options =>
 {
@@ -58,5 +57,4 @@ app.UseStaticFiles();
 app.UseCors("AllowFrontend");
 
 app.MapControllers();
-app.MapHub<StationHub>("/hub/station");
 app.Run();
