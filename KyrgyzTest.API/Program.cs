@@ -10,6 +10,8 @@ builder.Services.AddServices();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddJwtAuth(builder.Configuration);
+
 
 builder.Services.AddCors(options =>
 {
@@ -55,6 +57,8 @@ app.UseSwaggerUI();
 
 app.UseStaticFiles();
 app.UseCors("AllowFrontend");
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 app.Run();

@@ -93,7 +93,21 @@ namespace KyrgyzTest.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Login")
+                        .IsUnique();
+
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567890"),
+                            CreatedAt = new DateTime(2026, 4, 17, 16, 31, 13, 372, DateTimeKind.Utc).AddTicks(9540),
+                            FullName = "Super Admin",
+                            Login = "superadmin",
+                            PasswordHash = "$2a$11$YEhXcE2nILNSSsckAzsWo.33K5LhPC4vPU0uiDdgYin04.BaYo0BO",
+                            Role = 0
+                        });
                 });
 #pragma warning restore 612, 618
         }
