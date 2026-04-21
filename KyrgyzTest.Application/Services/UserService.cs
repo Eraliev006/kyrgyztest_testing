@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using KyrgyzTest.Application.DTOs;
 using KyrgyzTest.Application.Interfaces;
 using KyrgyzTest.Core.Entities;
@@ -86,8 +84,6 @@ public class UserService : IUserService
 
     private static string Hash(string password)
     {
-        using var sha = SHA256.Create();
-        var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-        return Convert.ToHexString(bytes);
+        return BCrypt.Net.BCrypt.HashPassword(password);
     }
 }

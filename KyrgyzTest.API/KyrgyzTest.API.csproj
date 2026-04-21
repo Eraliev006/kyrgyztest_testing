@@ -10,7 +10,7 @@
     <ItemGroup>
         <PackageReference Include="DotNetEnv" Version="3.1.1" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.25" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.9" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
           <PrivateAssets>all</PrivateAssets>
@@ -20,7 +20,7 @@
         <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
         <PackageReference Include="Serilog.Sinks.File" Version="8.0.0-nblumhardt-02322" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
     </ItemGroup>
 
     <ItemGroup>

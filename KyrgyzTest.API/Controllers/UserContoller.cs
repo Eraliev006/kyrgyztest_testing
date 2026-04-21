@@ -1,11 +1,13 @@
 using KyrgyzTest.Application.DTOs;
 using KyrgyzTest.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KyrgyzTest.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "SuperAdmin,Director")]
 public class UserController : ControllerBase
 {
     private readonly IUserService _service;

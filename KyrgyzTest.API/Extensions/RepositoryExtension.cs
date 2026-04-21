@@ -9,6 +9,10 @@ public static class RepositoryExtension
         this IServiceCollection services)
     {
         services.AddScoped<IUserRepository,UserRepository>();
+        services.AddScoped<ICandidateRepository, CandidateRepository>();
+        services.AddScoped<IQuestionRepository, QuestionRepository>();
+        services.AddScoped<IMediaGroupRepository, MediaGroupRepository>();
+        
         return services;
     } 
 }

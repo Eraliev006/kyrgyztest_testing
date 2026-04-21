@@ -3,6 +3,7 @@ using System;
 using KyrgyzTest.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KyrgyzTest.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260421101523_AddTestStructure")]
+    partial class AddTestStructure
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,36 +51,6 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.ToTable("AnswerOptions");
                 });
 
-            modelBuilder.Entity("KyrgyzTest.Core.Entities.Attempt", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CandidateId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("StartedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("SubmittedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("TestVariantId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CandidateId");
-
-                    b.HasIndex("TestVariantId");
-
-                    b.ToTable("Attempts");
-                });
-
             modelBuilder.Entity("KyrgyzTest.Core.Entities.Candidate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -105,33 +78,6 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Candidates");
-                });
-
-            modelBuilder.Entity("KyrgyzTest.Core.Entities.CandidateAnswer", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AttemptId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("OrderedAnswer")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("QuestionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("SelectedOptionId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AttemptId");
-
-                    b.HasIndex("QuestionId");
-
-                    b.ToTable("CandidateAnswers");
                 });
 
             modelBuilder.Entity("KyrgyzTest.Core.Entities.MediaGroup", b =>
@@ -185,48 +131,6 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.HasIndex("MediaGroupId");
 
                     b.ToTable("Questions");
-                });
-
-            modelBuilder.Entity("KyrgyzTest.Core.Entities.Result", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AttemptId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CandidateId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("GrammarScore")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Level")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ListeningScore")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ReadingScore")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TotalScore")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("WritingScore")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AttemptId");
-
-                    b.HasIndex("CandidateId");
-
-                    b.ToTable("Results");
                 });
 
             modelBuilder.Entity("KyrgyzTest.Core.Entities.SectionConfig", b =>
@@ -334,10 +238,10 @@ namespace KyrgyzTest.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567890"),
-                            CreatedAt = new DateTime(2026, 4, 21, 10, 29, 13, 641, DateTimeKind.Utc).AddTicks(2610),
+                            CreatedAt = new DateTime(2026, 4, 21, 10, 15, 23, 579, DateTimeKind.Utc).AddTicks(8110),
                             FullName = "Super Admin",
                             Login = "superadmin",
-                            PasswordHash = "$2a$11$QqZ7zPG9TttEGJQO4o5Ty.1Z3N2F1OWl44lhr9Iy.u8ZAe1svlC6C",
+                            PasswordHash = "$2a$11$IMYLxPzbC5MAoGA0lMxhwua0etUKLxUhoH05sZK6LEaOwCamD5jLS",
                             Role = 0
                         });
                 });
@@ -353,44 +257,6 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.Navigation("Question");
                 });
 
-            modelBuilder.Entity("KyrgyzTest.Core.Entities.Attempt", b =>
-                {
-                    b.HasOne("KyrgyzTest.Core.Entities.Candidate", "Candidate")
-                        .WithMany()
-                        .HasForeignKey("CandidateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("KyrgyzTest.Core.Entities.TestVariant", "TestVariant")
-                        .WithMany()
-                        .HasForeignKey("TestVariantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Candidate");
-
-                    b.Navigation("TestVariant");
-                });
-
-            modelBuilder.Entity("KyrgyzTest.Core.Entities.CandidateAnswer", b =>
-                {
-                    b.HasOne("KyrgyzTest.Core.Entities.Attempt", "Attempt")
-                        .WithMany()
-                        .HasForeignKey("AttemptId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("KyrgyzTest.Core.Entities.Question", "Question")
-                        .WithMany()
-                        .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Attempt");
-
-                    b.Navigation("Question");
-                });
-
             modelBuilder.Entity("KyrgyzTest.Core.Entities.Question", b =>
                 {
                     b.HasOne("KyrgyzTest.Core.Entities.MediaGroup", "MediaGroup")
@@ -398,25 +264,6 @@ namespace KyrgyzTest.Infrastructure.Migrations
                         .HasForeignKey("MediaGroupId");
 
                     b.Navigation("MediaGroup");
-                });
-
-            modelBuilder.Entity("KyrgyzTest.Core.Entities.Result", b =>
-                {
-                    b.HasOne("KyrgyzTest.Core.Entities.Attempt", "Attempt")
-                        .WithMany()
-                        .HasForeignKey("AttemptId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("KyrgyzTest.Core.Entities.Candidate", "Candidate")
-                        .WithMany()
-                        .HasForeignKey("CandidateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Attempt");
-
-                    b.Navigation("Candidate");
                 });
 
             modelBuilder.Entity("KyrgyzTest.Core.Entities.TestVariantQuestion", b =>

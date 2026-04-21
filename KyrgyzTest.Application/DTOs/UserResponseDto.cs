@@ -2,7 +2,7 @@ using KyrgyzTest.Core.Enums;
 
 namespace KyrgyzTest.Application.DTOs;
 
-public class UserResponseDto
+public record UserResponseDto
 {
     public Guid Id { get; set; }
     public string FullName { get; set; } = string.Empty;
