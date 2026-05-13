@@ -69,6 +69,14 @@ public class CandidateService : ICandidateService
         return Map(updated);
     }
 
+    public async Task DeleteAsync(Guid id)
+    {
+        _ = await _repository.GetByIdAsync(id)
+            ?? throw new NotFoundException("Кандидат не найден");
+
+        await _repository.DeleteAsync(id);
+    }
+
     private static string GenerateAccessCode()
     {
         var date = DateTime.UtcNow.ToString("yyyyMMdd");

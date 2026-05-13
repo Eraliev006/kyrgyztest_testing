@@ -1,0 +1,24 @@
+# Build output
+**/bin/
+**/obj/
+
+# Migrations — читать можно, но не трогать
+**/Migrations/
+
+# Secrets
+.env
+.env.*
+
+# IDE
+.idea/
+.DS_Store
+*.user
+
+# Docker
+compose.yaml
+
+# Git
+.git/
+
+# Docs (читать только если явно попросили)
+docs/

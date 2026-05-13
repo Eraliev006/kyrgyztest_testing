@@ -59,4 +59,11 @@ public class CandidateController : ControllerBase
         var candidate = await _service.AllowAccessAsync(id);
         return Ok(candidate);
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        await _service.DeleteAsync(id);
+        return NoContent();
+    }
 }

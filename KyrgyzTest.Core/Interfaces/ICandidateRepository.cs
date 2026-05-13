@@ -9,4 +9,5 @@ public interface ICandidateRepository
     Task<List<Candidate>> GetAllAsync();
     Task<Candidate> CreateAsync(Candidate candidate);
     Task<Candidate> UpdateAsync(Candidate candidate);
+    Task DeleteAsync(Guid id);
 }

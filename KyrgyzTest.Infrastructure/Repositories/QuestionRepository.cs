@@ -50,7 +50,19 @@ public class QuestionRepository : IQuestionRepository
 
     public async Task<Question> UpdateAsync(Question question)
     {
-        _context.Questions.Update(question);
+        // Direct SQL delete — bypasses tracker, avoids conflict with tracked old options
+        await _context.AnswerOptions
+            .Where(a => a.QuestionId == question.Id)
+            .ExecuteDeleteAsync();
+
+        // Detach stale tracked options so SaveChanges doesn't try to act on them
+        foreach (var entry in _context.ChangeTracker.Entries<AnswerOption>()
+                     .Where(e => e.Entity.QuestionId == question.Id).ToList())
+            entry.State = EntityState.Detached;
+
+        _context.AnswerOptions.AddRange(question.AnswerOptions);
+        _context.Entry(question).State = EntityState.Modified;
+
         await _context.SaveChangesAsync();
         return question;
     }

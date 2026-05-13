@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<Attempt> Attempts { get; set; }
     public DbSet<CandidateAnswer> CandidateAnswers { get; set; }
     public DbSet<Result> Results { get; set; }
+    public DbSet<CompletedSection> CompletedSections { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -90,6 +91,11 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(r => r.CandidateId);
 
+
+        modelBuilder.Entity<CompletedSection>()
+            .HasOne(cs => cs.Attempt)
+            .WithMany()
+            .HasForeignKey(cs => cs.AttemptId);
 
         base.OnModelCreating(modelBuilder);
     }

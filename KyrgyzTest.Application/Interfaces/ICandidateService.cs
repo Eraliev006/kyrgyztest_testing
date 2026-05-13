@@ -10,4 +10,5 @@ public interface ICandidateService
     Task<CandidateResponseDto?> GetByAccessCodeAsync(string accessCode);
     Task<List<CandidateResponseDto>> GetAllAsync();
     Task<CandidateResponseDto> AllowAccessAsync(Guid id);
+    Task DeleteAsync(Guid id);
 }

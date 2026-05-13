@@ -12,7 +12,13 @@ public static class RepositoryExtension
         services.AddScoped<ICandidateRepository, CandidateRepository>();
         services.AddScoped<IQuestionRepository, QuestionRepository>();
         services.AddScoped<IMediaGroupRepository, MediaGroupRepository>();
-        
+        services.AddScoped<ISectionConfigRepository, SectionConfigRepository>();
+        services.AddScoped<ITestVariantRepository, TestVariantRepository>();
+        services.AddScoped<IAttemptRepository, AttemptRepository>();
+        services.AddScoped<ICandidateAnswerRepository, CandidateAnswerRepository>();
+        services.AddScoped<IResultRepository, ResultRepository>();
+        services.AddScoped<ICompletedSectionRepository, CompletedSectionRepository>();
+
         return services;
     } 
 }

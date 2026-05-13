@@ -39,4 +39,14 @@ public class CandidateRepository: ICandidateRepository
         await _context.SaveChangesAsync();
         return candidate;
     }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        var candidate = await _context.Candidates.FindAsync(id);
+        if (candidate != null)
+        {
+            _context.Candidates.Remove(candidate);
+            await _context.SaveChangesAsync();
+        }
+    }
 }
