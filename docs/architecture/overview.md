@@ -6,22 +6,36 @@ Clean Architecture — разделение на 4 слоя.
 
 ## Слои
 
-**Core (Domain)** — модели, интерфейсы, enums. Никаких зависимостей.
+**Core (Domain)** — сущности, интерфейсы репозиториев, enums, исключения. Никаких зависимостей.
 
-**Application** — бизнес-логика, сервисы, DTOs. Зависит только от Core.
+**Application** — бизнес-логика, сервисы, DTOs, интерфейсы сервисов. Зависит только от Core.
 
-**Infrastructure** — DbContext, репозитории. Реализует интерфейсы Core.
+**Infrastructure** — DbContext, репозитории, миграции. Реализует интерфейсы из Core.
 
-**API** — контроллеры, SignalR хабы, middleware. Точка входа.
+**API** — контроллеры, middleware, DI-регистрация, точка входа.
 
 ## Зависимости
+```
 API → Application → Core
-Infrastructure → Application → Core
+Infrastructure → Core
+```
+
+Инфраструктура и API не зависят друг от друга напрямую. Связь через DI.
 
 ## Технологии
 
 - ASP.NET Core 8
-- Entity Framework Core 8 + PostgreSQL
-- SignalR — реальное время
-- JWT — авторизация станций
+- Entity Framework Core 8 + PostgreSQL (Npgsql)
+- JWT Bearer — авторизация пользователей
+- bcrypt (BCrypt.Net-Next) — хэширование паролей
 - Docker — контейнеризация
+
+## Ключевые решения
+
+**Enum-строки в JSON.** Все enums сериализуются как строки (`JsonStringEnumConverter`), а не числа. Это упрощает отладку и работу фронтенда.
+
+**Миграции применяются автоматически** при старте приложения. Логика в `Program.cs` — 5 попыток с задержкой, пока база не поднимется.
+
+**CORS** настроен под `http://localhost:5173` (Vue dev-сервер). В продакшне URL задаётся через конфигурацию.
+
+**Статические файлы** (аудио для вопросов) раздаются напрямую из директории `uploads/` по пути `/uploads/{filename}`.

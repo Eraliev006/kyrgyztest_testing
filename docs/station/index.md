@@ -5,4 +5,4 @@
 ## Разделы
 
 - [Обзор](overview.md)
-- [SignalR](signalr.md)
+- [Интеграция фронтенда](signalr.md)

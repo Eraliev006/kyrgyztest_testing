@@ -9,32 +9,59 @@ cd kyrgyztest_testing
 
 ## Настроить переменные окружения
 
-```bash
-cp .env.example .env
-```
+Создай `.env` в корне проекта:
 
-Заполни `.env`:
-```
+```env
+# PostgreSQL (используется контейнером базы данных)
 POSTGRES_DB=kyrgyztest
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=yourpassword
-POSTGRES_HOST=kyrgyztest_database
-POSTGRES_PORT=5432
-JWT_SECRET=your_super_secret_key_min_32_chars
-JWT_ISSUER=KyrgyzTest
-JWT_AUDIENCE=KyrgyzTestStations
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+
+# JWT
+Jwt__Key=your_super_secret_key_at_least_32_chars
+Jwt__Issuer=KyrgyzTest
+Jwt__Audience=KyrgyzTestUsers
+
+# Пароль для разблокировки станции (POST /api/exam/unlock)
+ExamSettings__AccessPassword=your_station_password
+
+# Директория для загрузки аудиофайлов
+FileStorage__Path=uploads
 ```
 
 ## Запустить через Docker
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
+
+Приложение будет доступно на порту `8000`. При первом старте автоматически применяются миграции и создаётся пользователь `superadmin` / `admin123`.
 
 ## Проверить
 
 - Swagger UI: http://localhost:8000/swagger
-- Station Client: http://localhost:8000/station.html
+- API base: http://localhost:8000/api
+
+## Локальный запуск без Docker
+
+Требования: .NET 8 SDK, PostgreSQL.
+
+```bash
+# Запустить только базу данных
+docker compose up kyrgyztest_database -d
+
+# Применить миграции
+dotnet ef database update --project KyrgyzTest.Infrastructure --startup-project KyrgyzTest.API
+
+# Запустить API
+dotnet run --project KyrgyzTest.API
+```
+
+## Тесты
+
+```bash
+dotnet test
+```
 
 ## Ветки
 

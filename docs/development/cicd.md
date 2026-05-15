@@ -24,8 +24,8 @@ dotnet test --no-build
 
 **deploy** — деплой на сервер (только `production`):
 ```bash
-docker-compose down
-docker-compose up --build -d
+docker compose down
+docker compose up --build -d
 ```
 
 ## Ветки

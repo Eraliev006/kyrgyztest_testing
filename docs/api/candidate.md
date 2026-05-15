@@ -1,50 +1,128 @@
-# API — Кандидаты
+# API — Кандидаты и организации
 
-## POST /api/Candidate/register
+## Аутентификация персонала
 
-Регистрация нового кандидата в системе.
+### POST /api/auth/login
+
+Вход сотрудника системы. Не требует токена.
 
 **Request body:**
 ```json
-{
-  "fullName": "Эралиев Адилет",
-  "passportNumber": "ID12345678",
-  "category": 0
-}
+{ "login": "superadmin", "password": "admin123" }
 ```
-
-**Category:**
-- `0` — Student (Студент)
-- `1` — Immigrant (Иммигрант)
-- `2` — CivilServant (Гос.служащий)
 
 **Response 200:**
 ```json
 {
-  "examCode": "260403-3881",
-  "fullName": "Эралиев Адилет",
-  "category": 0,
-  "registeredAt": "2026-04-03T00:24:32Z"
+  "accessToken": "eyJ...",
+  "fullName": "Super Admin",
+  "login": "superadmin",
+  "role": "SuperAdmin"
 }
 ```
 
 ---
 
-## POST /api/Candidate/assign
+## Кандидаты
 
-Назначение свободного компьютера кандидату.
+Все эндпоинты требуют `Authorization: Bearer <token>`.
 
-**Query параметр:** `examCode`
+### GET /api/candidates
+
+Список всех кандидатов.
+
+### GET /api/candidates/{id}
+
+Один кандидат. `404` если не найден.
+
+### GET /api/candidates/search
+
+Поиск по ИНН или коду доступа.
+
+**Query params:** `?inn=12345678901234` или `?code=20260515-1234`
+
+### POST /api/candidates
+
+Создать кандидата.
+
+**Request body:**
+```json
+{
+  "fullName": "Эралиев Адилет",
+  "inn": "12345678901234",
+  "organizationId": "uuid или null"
+}
+```
 
 **Response 200:**
 ```json
 {
-  "examCode": "260403-3881",
-  "stationNumber": 18,
-  "startAt": "2026-04-03T00:24:52Z"
+  "id": "uuid",
+  "fullName": "Эралиев Адилет",
+  "inn": "12345678901234",
+  "accessCode": "20260515-4823",
+  "isAllowed": true,
+  "createdAt": "2026-05-15T12:00:00Z",
+  "organizationId": "uuid или null",
+  "photo": null,
+  "blockedUntil": null
 }
 ```
 
-**Ошибки:**
-- `400` — сессия уже существует
-- `422` — нет свободных компьютеров
+`accessCode` генерируется автоматически в формате `YYYYMMDD-NNNN`.
+
+### PUT /api/candidates/{id}/photo
+**Роли:** SuperAdmin, Director, Admin
+
+Загрузить или обновить фото кандидата (строка: URL или base64).
+
+**Request body:**
+```json
+{ "photo": "https://..." }
+```
+
+### PUT /api/candidates/{id}/allow
+
+Открыть доступ к экзамену (`IsAllowed = true`).
+
+### PUT /api/candidates/{id}/deny
+**Роли:** SuperAdmin, Director, Admin
+
+Закрыть доступ (`IsAllowed = false`).
+
+### PUT /api/candidates/{id}/block
+**Роли:** SuperAdmin, Director, Admin
+
+Заблокировать на срок. При попытке войти через `POST /exam/login` вернётся `403` с датой.
+
+**Request body:**
+```json
+{ "value": 30, "unit": "days" }
+```
+
+`unit`: `"days"`, `"weeks"`, `"months"`, `"years"`
+
+### DELETE /api/candidates/{id}
+
+Удалить кандидата.
+
+---
+
+## Организации
+
+### GET /api/organizations
+
+Список организаций. Требует авторизации.
+
+### POST /api/organizations
+**Роли:** SuperAdmin, Director
+
+```json
+{ "name": "Министерство образования" }
+```
+
+### PUT /api/organizations/{id}
+**Роли:** SuperAdmin, Director
+
+### DELETE /api/organizations/{id}
+**Роли:** SuperAdmin, Director

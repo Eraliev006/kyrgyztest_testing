@@ -1,34 +1,62 @@
-# SignalR
+# Интеграция фронтенда со станцией
 
-## Хаб
+## Стек
 
-URL: `/hub/station`
+Фронтенд написан на Vue 3 + Vite + TypeScript. Взаимодействие с API через Axios. Состояние приложения управляется через Pinia.
 
-## Методы (браузер → сервер)
+## Схема запросов
 
-| Метод | Параметры | Описание |
-|-------|-----------|----------|
-| RegisterStation | stationNumber | Регистрация станции в группе |
+### Разблокировка станции
 
-## События (сервер → браузер)
-
-| Событие | Параметры | Описание |
-|---------|-----------|----------|
-| StationRegistered | stationNumber | Подтверждение регистрации |
-| ExamOpened | examCode | Открыть экзамен |
-
-## Пример подключения
-
-```javascript
-const connection = new signalR.HubConnectionBuilder()
-    .withUrl("/hub/station")
-    .withAutomaticReconnect()
-    .build();
-
-connection.on("ExamOpened", (examCode) => {
-    // открыть страницу теста
-});
-
-await connection.start();
-await connection.invoke("RegisterStation", stationNumber);
 ```
+POST /api/exam/unlock
+Body: { "password": "..." }
+→ 200 OK | 403 Forbidden
+```
+
+### Вход кандидата
+
+```
+POST /api/exam/login
+Body: { "accessCode": "20260515-1234" }
+→ 200 { candidateId, name, ... }
+→ 403 если заблокирован или доступ закрыт
+```
+
+### Запуск экзамена
+
+```
+POST /api/exam/start
+Body: { "candidateId": "..." }
+→ 200 { attemptId, sections: [...] }
+```
+
+### Секция
+
+```
+POST /api/exam/section/start
+Body: { "attemptId": "...", "sectionType": "Grammar" }
+→ 200 { sectionId, questions: [...] }
+
+POST /api/exam/section/answer
+Body: { "sectionId": "...", "questionId": "...", "answerId": "..." }
+→ 200 OK
+
+POST /api/exam/section/submit
+Body: { "sectionId": "..." }
+→ 200 OK
+```
+
+### Завершение экзамена
+
+```
+POST /api/exam/submit
+Body: { "attemptId": "..." }
+→ 200 { level: "B1", score: 72, ... }
+```
+
+## Примечания
+
+- Все enums передаются как строки (JsonStringEnumConverter)
+- CORS настроен на `http://localhost:5173` (Vue dev-сервер)
+- В продакшне фронтенд и бэкенд доступны на одном домене через nginx/proxy
