@@ -1,5 +1,7 @@
 using KyrgyzTest.API;
 using KyrgyzTest.API.Extensions;
+using KyrgyzTest.Core.Entities;
+using KyrgyzTest.Core.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -8,7 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDatabaseConnection(builder.Configuration);
 builder.Services.AddRepositories();
 builder.Services.AddServices();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -68,6 +72,23 @@ using (var scope = app.Services.CreateScope())
         {
             context.Database.Migrate();
             Console.WriteLine("--- Миграции успешно применены! ---");
+
+            var existing = context.Users.FirstOrDefault(u => u.Login == "superadmin");
+            if (existing != null)
+                context.Users.Remove(existing);
+
+            context.Users.Add(new Users
+            {
+                Id = Guid.NewGuid(),
+                FullName = "Super Admin",
+                Login = "superadmin",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                Role = UserRole.SuperAdmin,
+                CreatedAt = DateTime.UtcNow
+            });
+            context.SaveChanges();
+            Console.WriteLine("--- SuperAdmin пересоздан ---");
+
             break;
         }
         catch (Exception ex)

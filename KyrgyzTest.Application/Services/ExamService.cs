@@ -242,6 +242,7 @@ public class ExamService : IExamService
         var candidate = await _candidateRepository.GetByIdAsync(attempt.CandidateId)
             ?? throw new NotFoundException($"Кандидат {attempt.CandidateId} не найден");
         candidate.IsAllowed = false;
+        candidate.Photo = null;
         await _candidateRepository.UpdateAsync(candidate);
 
         return new ResultResponseDto
