@@ -16,6 +16,10 @@ public static class ServiceExtension
         services.AddScoped<ITestVariantGeneratorService, TestVariantGeneratorService>();
         services.AddScoped<IExamService, ExamService>();
         services.AddScoped<ITestVariantService, TestVariantService>();
+        services.AddScoped<IOrganizationService, OrganizationService>();
+        services.AddScoped<IResultService, ResultService>();
+        services.AddScoped<ITopicService, TopicService>();
+        services.AddHttpContextAccessor();
         return services;
     }
 }

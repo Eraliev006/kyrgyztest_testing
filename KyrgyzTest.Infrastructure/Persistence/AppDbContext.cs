@@ -9,6 +9,7 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) {}
     public DbSet<Users> Users { get; set; }
     public DbSet<Candidate>  Candidates { get; set; }
+    public DbSet<Organization> Organizations { get; set; }
     public DbSet<MediaGroup> MediaGroups { get; set; }
     public DbSet<Question> Questions { get; set; }
     public DbSet<AnswerOption> AnswerOptions { get; set; }
@@ -19,7 +20,8 @@ public class AppDbContext : DbContext
     public DbSet<CandidateAnswer> CandidateAnswers { get; set; }
     public DbSet<Result> Results { get; set; }
     public DbSet<CompletedSection> CompletedSections { get; set; }
-    
+    public DbSet<Topic> Topics { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Users>()
@@ -36,11 +38,34 @@ public class AppDbContext : DbContext
             CreatedAt = DateTime.UtcNow
         });
         
+        modelBuilder.Entity<Candidate>()
+            .HasOne(c => c.Organization)
+            .WithMany()
+            .HasForeignKey(c => c.OrganizationId)
+            .IsRequired(false);
+
         modelBuilder.Entity<Question>()
             .HasOne(q => q.MediaGroup)
             .WithMany(m => m.Questions)
             .HasForeignKey(q => q.MediaGroupId)
             .IsRequired(false);
+
+        modelBuilder.Entity<Question>()
+            .HasOne(q => q.Topic)
+            .WithMany(t => t.Questions)
+            .HasForeignKey(q => q.TopicId)
+            .IsRequired(false);
+
+        modelBuilder.Entity<Topic>().HasData(
+            new Topic { Id = Guid.Parse("a0000001-0000-0000-0000-000000000001"), Name = "Зат атооч", SectionType = SectionType.Grammar },
+            new Topic { Id = Guid.Parse("a0000001-0000-0000-0000-000000000002"), Name = "Сын атооч", SectionType = SectionType.Grammar },
+            new Topic { Id = Guid.Parse("a0000001-0000-0000-0000-000000000003"), Name = "Этиш", SectionType = SectionType.Grammar },
+            new Topic { Id = Guid.Parse("a0000001-0000-0000-0000-000000000004"), Name = "Ат атооч", SectionType = SectionType.Grammar },
+            new Topic { Id = Guid.Parse("a0000001-0000-0000-0000-000000000005"), Name = "Сан атооч", SectionType = SectionType.Grammar },
+            new Topic { Id = Guid.Parse("a0000001-0000-0000-0000-000000000006"), Name = "Тактооч", SectionType = SectionType.Grammar },
+            new Topic { Id = Guid.Parse("a0000001-0000-0000-0000-000000000007"), Name = "Байламта", SectionType = SectionType.Grammar },
+            new Topic { Id = Guid.Parse("a0000001-0000-0000-0000-000000000008"), Name = "Жалгоо", SectionType = SectionType.Grammar }
+        );
 
         modelBuilder.Entity<AnswerOption>()
             .HasOne(a => a.Question)

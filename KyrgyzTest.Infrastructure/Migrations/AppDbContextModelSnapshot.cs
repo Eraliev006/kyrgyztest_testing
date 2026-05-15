@@ -88,6 +88,9 @@ namespace KyrgyzTest.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("BlockedUntil")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -102,7 +105,15 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.Property<bool>("IsAllowed")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid?>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Photo")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId");
 
                     b.ToTable("Candidates");
                 });
@@ -174,6 +185,29 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.ToTable("MediaGroups");
                 });
 
+            modelBuilder.Entity("KyrgyzTest.Core.Entities.Organization", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("NameKg")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NameRu")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ShortName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Organizations");
+                });
+
             modelBuilder.Entity("KyrgyzTest.Core.Entities.Question", b =>
                 {
                     b.Property<Guid>("Id")
@@ -199,12 +233,17 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.Property<int>("Section")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("TopicId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("MediaGroupId");
+
+                    b.HasIndex("TopicId");
 
                     b.ToTable("Questions");
                 });
@@ -292,6 +331,9 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.Property<DateTime>("GeneratedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("Number")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("TestVariants");
@@ -319,6 +361,74 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.HasIndex("TestVariantId");
 
                     b.ToTable("TestVariantQuestions");
+                });
+
+            modelBuilder.Entity("KyrgyzTest.Core.Entities.Topic", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("SectionType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Topics");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("a0000001-0000-0000-0000-000000000001"),
+                            Name = "Зат атооч",
+                            SectionType = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0000-0000-0000-000000000002"),
+                            Name = "Сын атооч",
+                            SectionType = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0000-0000-0000-000000000003"),
+                            Name = "Этиш",
+                            SectionType = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0000-0000-0000-000000000004"),
+                            Name = "Ат атооч",
+                            SectionType = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0000-0000-0000-000000000005"),
+                            Name = "Сан атооч",
+                            SectionType = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0000-0000-0000-000000000006"),
+                            Name = "Тактооч",
+                            SectionType = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0000-0000-0000-000000000007"),
+                            Name = "Байламта",
+                            SectionType = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0000-0000-0000-000000000008"),
+                            Name = "Жалгоо",
+                            SectionType = 0
+                        });
                 });
 
             modelBuilder.Entity("KyrgyzTest.Core.Entities.Users", b =>
@@ -356,10 +466,10 @@ namespace KyrgyzTest.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567890"),
-                            CreatedAt = new DateTime(2026, 5, 3, 18, 27, 55, 25, DateTimeKind.Utc).AddTicks(3220),
+                            CreatedAt = new DateTime(2026, 5, 15, 18, 41, 45, 858, DateTimeKind.Utc).AddTicks(7530),
                             FullName = "Super Admin",
                             Login = "superadmin",
-                            PasswordHash = "$2a$11$qmA8dkeuyEKj8ALDXOKcWu1WSYBuxpLxXoyzGQfDiRcQIP8CIqhDW",
+                            PasswordHash = "$2a$11$/sPXQfmELB63rr/PduMR0O5n6vi5lUujMSkGCsYbgYJxtmnvpHDyy",
                             Role = 0
                         });
                 });
@@ -392,6 +502,15 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.Navigation("Candidate");
 
                     b.Navigation("TestVariant");
+                });
+
+            modelBuilder.Entity("KyrgyzTest.Core.Entities.Candidate", b =>
+                {
+                    b.HasOne("KyrgyzTest.Core.Entities.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId");
+
+                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("KyrgyzTest.Core.Entities.CandidateAnswer", b =>
@@ -430,7 +549,13 @@ namespace KyrgyzTest.Infrastructure.Migrations
                         .WithMany("Questions")
                         .HasForeignKey("MediaGroupId");
 
+                    b.HasOne("KyrgyzTest.Core.Entities.Topic", "Topic")
+                        .WithMany("Questions")
+                        .HasForeignKey("TopicId");
+
                     b.Navigation("MediaGroup");
+
+                    b.Navigation("Topic");
                 });
 
             modelBuilder.Entity("KyrgyzTest.Core.Entities.Result", b =>
@@ -482,6 +607,11 @@ namespace KyrgyzTest.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("KyrgyzTest.Core.Entities.TestVariant", b =>
+                {
+                    b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("KyrgyzTest.Core.Entities.Topic", b =>
                 {
                     b.Navigation("Questions");
                 });

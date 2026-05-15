@@ -18,6 +18,8 @@ public static class RepositoryExtension
         services.AddScoped<ICandidateAnswerRepository, CandidateAnswerRepository>();
         services.AddScoped<IResultRepository, ResultRepository>();
         services.AddScoped<ICompletedSectionRepository, CompletedSectionRepository>();
+        services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+        services.AddScoped<ITopicRepository, TopicRepository>();
 
         return services;
     } 
