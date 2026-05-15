@@ -9,7 +9,8 @@ public record CreateQuestionDto(
     QuestionType Type,
     string Content,
     Guid? MediaGroupId,
-    List<CreateAnswerOptionDto> AnswerOptions
+    List<CreateAnswerOptionDto> AnswerOptions,
+    Guid? TopicId = null
 );
 
 public record CreateAnswerOptionDto(

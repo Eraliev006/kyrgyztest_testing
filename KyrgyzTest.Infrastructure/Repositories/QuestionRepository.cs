@@ -19,18 +19,21 @@ public class QuestionRepository : IQuestionRepository
         => await _context.Questions
             .Include(q => q.AnswerOptions)
             .Include(q => q.MediaGroup)
+            .Include(q => q.Topic)
             .FirstOrDefaultAsync(q => q.Id == id);
 
     public async Task<List<Question>> GetAllAsync()
         => await _context.Questions
             .Include(q => q.AnswerOptions)
             .Include(q => q.MediaGroup)
+            .Include(q => q.Topic)
             .ToListAsync();
 
     public async Task<List<Question>> GetBySectionAsync(SectionType section)
         => await _context.Questions
             .Include(q => q.AnswerOptions)
             .Include(q => q.MediaGroup)
+            .Include(q => q.Topic)
             .Where(q => q.Section == section)
             .ToListAsync();
 
@@ -38,6 +41,7 @@ public class QuestionRepository : IQuestionRepository
         => await _context.Questions
             .Include(q => q.AnswerOptions)
             .Include(q => q.MediaGroup)
+            .Include(q => q.Topic)
             .Where(q => q.Section == section && q.Level == level)
             .ToListAsync();
 

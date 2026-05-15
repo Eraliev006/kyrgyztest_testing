@@ -12,6 +12,8 @@ public class Question
     public int OrderIndex { get; set; }
     public Guid? MediaGroupId { get; set; }
     public MediaGroup? MediaGroup { get; set; }
+    public Guid? TopicId { get; set; }
+    public Topic? Topic { get; set; }
     public ICollection<AnswerOption> AnswerOptions { get; set; } = new List<AnswerOption>();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

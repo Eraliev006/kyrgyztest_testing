@@ -13,6 +13,8 @@ public record QuestionResponseDto
     public Guid? MediaGroupId { get; set; }
     public string? MediaUrl { get; set; }
     public string? MediaText { get; set; }
+    public Guid? TopicId { get; set; }
+    public string? TopicName { get; set; }
     public List<AnswerOptionResponseDto> AnswerOptions { get; set; } = new();
     public DateTime CreatedAt { get; set; }
 }

@@ -53,6 +53,7 @@ public class QuestionService : IQuestionService
             Type = dto.Type,
             Content = dto.Content,
             MediaGroupId = dto.MediaGroupId,
+            TopicId = dto.TopicId,
             OrderIndex = 0,
             CreatedAt = DateTime.UtcNow,
             AnswerOptions = dto.AnswerOptions.Select(a => new AnswerOption
@@ -78,6 +79,7 @@ public class QuestionService : IQuestionService
         question.Type = dto.Type;
         question.Content = dto.Content;
         question.MediaGroupId = dto.MediaGroupId;
+        question.TopicId = dto.TopicId;
         question.AnswerOptions = dto.AnswerOptions.Select(a => new AnswerOption
         {
             Id = Guid.NewGuid(),
@@ -128,6 +130,8 @@ public class QuestionService : IQuestionService
         MediaGroupId = q.MediaGroupId,
         MediaUrl = q.MediaGroup?.Type == MediaType.Audio ? q.MediaGroup.Content : null,
         MediaText = q.MediaGroup?.Type == MediaType.Text ? q.MediaGroup.Content : null,
+        TopicId = q.TopicId,
+        TopicName = q.Topic?.Name,
         CreatedAt = q.CreatedAt,
         AnswerOptions = q.AnswerOptions.Select(a => new AnswerOptionResponseDto
         {
