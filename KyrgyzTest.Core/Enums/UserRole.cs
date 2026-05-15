@@ -5,5 +5,6 @@ public enum UserRole
     SuperAdmin,
     Director,
     Admin,
-    Examiner
+    Examiner,
+    Expert
 }
