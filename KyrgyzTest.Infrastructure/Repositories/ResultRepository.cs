@@ -1,4 +1,5 @@
 using KyrgyzTest.Core.Entities;
+using KyrgyzTest.Core.Enums;
 using KyrgyzTest.Core.Interfaces;
 using KyrgyzTest.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -28,4 +29,34 @@ public class ResultRepository : IResultRepository
 
     public async Task<List<Result>> GetAllAsync()
         => await _context.Results.ToListAsync();
+
+    public async Task<List<Result>> GetFilteredAsync(Guid? organizationId, LanguageLevel? level, DateTime? dateFrom, DateTime? dateTo)
+    {
+        var query = _context.Results
+            .Include(r => r.Candidate)
+                .ThenInclude(c => c.Organization)
+            .AsQueryable();
+
+        if (organizationId.HasValue)
+            query = query.Where(r => r.Candidate.OrganizationId == organizationId.Value);
+
+        if (level.HasValue)
+            query = query.Where(r => r.Level == level.Value);
+
+        if (dateFrom.HasValue)
+            query = query.Where(r => r.CreatedAt >= dateFrom.Value);
+
+        if (dateTo.HasValue)
+            query = query.Where(r => r.CreatedAt <= dateTo.Value);
+
+        return await query.ToListAsync();
+    }
+
+    public async Task<Result?> GetLatestByCandidateIdAsync(Guid candidateId)
+        => await _context.Results
+            .Include(r => r.Candidate)
+                .ThenInclude(c => c.Organization)
+            .Where(r => r.CandidateId == candidateId)
+            .OrderByDescending(r => r.CreatedAt)
+            .FirstOrDefaultAsync();
 }

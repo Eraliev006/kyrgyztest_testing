@@ -1,4 +1,5 @@
-using KyrgyzTest.Core.Interfaces;
+using KyrgyzTest.Application.Interfaces;
+using KyrgyzTest.Core.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,24 +10,38 @@ namespace KyrgyzTest.API.Controllers;
 [Authorize]
 public class ResultsController : ControllerBase
 {
-    private readonly IResultRepository _resultRepository;
+    private readonly IResultService _service;
 
-    public ResultsController(IResultRepository resultRepository)
+    public ResultsController(IResultService service)
     {
-        _resultRepository = resultRepository;
+        _service = service;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        [FromQuery] Guid? organizationId,
+        [FromQuery] LanguageLevel? level,
+        [FromQuery] DateTime? dateFrom,
+        [FromQuery] DateTime? dateTo)
     {
-        var results = await _resultRepository.GetAllAsync();
+        var results = await _service.GetAllAsync(organizationId, level, dateFrom, dateTo);
         return Ok(results);
     }
 
     [HttpGet("{candidateId:guid}")]
     public async Task<IActionResult> GetByCandidate(Guid candidateId)
     {
-        var results = await _resultRepository.GetByCandidateIdAsync(candidateId);
-        return Ok(results);
+        var result = await _service.GetByCandidateIdAsync(candidateId);
+        return Ok(result);
+    }
+
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetStats(
+        [FromQuery] Guid? organizationId,
+        [FromQuery] DateTime? dateFrom,
+        [FromQuery] DateTime? dateTo)
+    {
+        var stats = await _service.GetStatsAsync(organizationId, dateFrom, dateTo);
+        return Ok(stats);
     }
 }
