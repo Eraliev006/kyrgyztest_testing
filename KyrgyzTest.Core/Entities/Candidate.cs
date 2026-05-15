@@ -10,4 +10,8 @@ public class Candidate
     public string AccessCode { get; set; } = string.Empty;
     public bool IsAllowed { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public Guid? OrganizationId { get; set; }
+    public Organization? Organization { get; set; }
+    public string? Photo { get; set; }
+    public DateTime? BlockedUntil { get; set; }
 }

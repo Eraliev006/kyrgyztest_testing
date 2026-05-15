@@ -28,7 +28,8 @@ public class CandidateService : ICandidateService
             Inn = dto.Inn,
             AccessCode = GenerateAccessCode(),
             IsAllowed = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            OrganizationId = dto.OrganizationId
         };
 
         var created = await _repository.CreateAsync(candidate);
@@ -69,6 +70,44 @@ public class CandidateService : ICandidateService
         return Map(updated);
     }
 
+    public async Task<CandidateResponseDto> DenyAccessAsync(Guid id)
+    {
+        var candidate = await _repository.GetByIdAsync(id)
+            ?? throw new NotFoundException("Кандидат не найден");
+
+        candidate.IsAllowed = false;
+        var updated = await _repository.UpdateAsync(candidate);
+        return Map(updated);
+    }
+
+    public async Task<CandidateResponseDto> BlockAsync(Guid id, BlockCandidateDto dto)
+    {
+        var candidate = await _repository.GetByIdAsync(id)
+            ?? throw new NotFoundException("Кандидат не найден");
+
+        candidate.BlockedUntil = dto.Unit switch
+        {
+            "days"   => DateTime.UtcNow.AddDays(dto.Value),
+            "weeks"  => DateTime.UtcNow.AddDays(dto.Value * 7),
+            "months" => DateTime.UtcNow.AddMonths(dto.Value),
+            "years"  => DateTime.UtcNow.AddYears(dto.Value),
+            _ => throw new ValidationException("Допустимые единицы: days, weeks, months, years")
+        };
+
+        var updated = await _repository.UpdateAsync(candidate);
+        return Map(updated);
+    }
+
+    public async Task<CandidateResponseDto> UploadPhotoAsync(Guid id, string photo)
+    {
+        var candidate = await _repository.GetByIdAsync(id)
+            ?? throw new NotFoundException("Кандидат не найден");
+
+        candidate.Photo = photo;
+        var updated = await _repository.UpdateAsync(candidate);
+        return Map(updated);
+    }
+
     public async Task DeleteAsync(Guid id)
     {
         _ = await _repository.GetByIdAsync(id)
@@ -91,6 +130,9 @@ public class CandidateService : ICandidateService
         Inn = c.Inn,
         AccessCode = c.AccessCode,
         IsAllowed = c.IsAllowed,
-        CreatedAt = c.CreatedAt
+        CreatedAt = c.CreatedAt,
+        OrganizationId = c.OrganizationId,
+        Photo = c.Photo,
+        BlockedUntil = c.BlockedUntil
     };
 }

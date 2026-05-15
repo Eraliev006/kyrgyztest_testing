@@ -8,4 +8,7 @@ public class CandidateResponseDto
     public string AccessCode { get; set; } = string.Empty;
     public bool IsAllowed { get; set; }
     public DateTime CreatedAt { get; set; }
+    public Guid? OrganizationId { get; set; }
+    public string? Photo { get; set; }
+    public DateTime? BlockedUntil { get; set; }
 }

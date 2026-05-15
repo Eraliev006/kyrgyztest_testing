@@ -37,6 +37,9 @@ public class ExamController : ControllerBase
         if (candidate == null)
             return NotFound("Кандидат не найден");
 
+        if (candidate.BlockedUntil.HasValue && candidate.BlockedUntil.Value > DateTime.UtcNow)
+            return StatusCode(403, $"Доступ заблокирован до {candidate.BlockedUntil.Value:dd.MM.yyyy}");
+
         if (!candidate.IsAllowed)
             return Forbid();
 

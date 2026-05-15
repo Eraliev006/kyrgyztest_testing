@@ -53,10 +53,34 @@ public class CandidateController : ControllerBase
         return Ok(candidate);
     }
 
+    [HttpPut("{id}/photo")]
+    [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    public async Task<IActionResult> UploadPhoto(Guid id, [FromBody] UploadPhotoDto dto)
+    {
+        var candidate = await _service.UploadPhotoAsync(id, dto.Photo);
+        return Ok(candidate);
+    }
+
     [HttpPut("{id}/allow")]
     public async Task<IActionResult> AllowAccess(Guid id)
     {
         var candidate = await _service.AllowAccessAsync(id);
+        return Ok(candidate);
+    }
+
+    [HttpPut("{id}/deny")]
+    [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    public async Task<IActionResult> DenyAccess(Guid id)
+    {
+        var candidate = await _service.DenyAccessAsync(id);
+        return Ok(candidate);
+    }
+
+    [HttpPut("{id}/block")]
+    [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    public async Task<IActionResult> Block(Guid id, [FromBody] BlockCandidateDto dto)
+    {
+        var candidate = await _service.BlockAsync(id, dto);
         return Ok(candidate);
     }
 
