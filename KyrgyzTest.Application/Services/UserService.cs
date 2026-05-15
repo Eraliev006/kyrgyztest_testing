@@ -1,17 +1,33 @@
+using System.Security.Claims;
 using KyrgyzTest.Application.DTOs;
 using KyrgyzTest.Application.Interfaces;
 using KyrgyzTest.Core.Entities;
+using KyrgyzTest.Core.Enums;
+using KyrgyzTest.Core.Exceptions;
 using KyrgyzTest.Core.Interfaces;
+using Microsoft.AspNetCore.Http;
 
 namespace KyrgyzTest.Application.Services;
 
 public class UserService : IUserService
 {
     private readonly IUserRepository _repository;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public UserService(IUserRepository repository)
+    public UserService(IUserRepository repository, IHttpContextAccessor httpContextAccessor)
     {
         _repository = repository;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    private void EnforceRoleCreationPolicy(UserRole targetRole)
+    {
+        var roleClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Role)?.Value;
+        if (Enum.TryParse<UserRole>(roleClaim, out var callerRole) && callerRole == UserRole.Director)
+        {
+            if (targetRole == UserRole.SuperAdmin || targetRole == UserRole.Director)
+                throw new BusinessException("Director не может создавать пользователей с ролью SuperAdmin или Director.");
+        }
     }
 
     public async Task<UserResponseDto?> GetById(Guid id)
@@ -34,6 +50,8 @@ public class UserService : IUserService
 
     public async Task<UserResponseDto> Create(CreateUserDto dto)
     {
+        EnforceRoleCreationPolicy(dto.Role);
+
         var user = new Users
         {
             Id = Guid.NewGuid(),
@@ -50,6 +68,8 @@ public class UserService : IUserService
 
     public async Task<UserResponseDto> Update(Guid id, CreateUserDto dto)
     {
+        EnforceRoleCreationPolicy(dto.Role);
+
         var user = await _repository.GetById(id);
 
         if (user == null)
