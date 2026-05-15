@@ -24,6 +24,7 @@ public class TestVariantService : ITestVariantService
         return variants.Select(v => new TestVariantSummaryDto
         {
             Id = v.Id,
+            Number = v.Number,
             GeneratedAt = v.GeneratedAt,
             QuestionCount = v.Questions.Count
         }).ToList();

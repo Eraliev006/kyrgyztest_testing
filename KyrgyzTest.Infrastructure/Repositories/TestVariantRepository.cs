@@ -26,6 +26,11 @@ public class TestVariantRepository : ITestVariantRepository
             .Include(v => v.Questions)
             .ToListAsync();
 
+    public async Task<int> GetMaxNumberAsync()
+        => await _context.TestVariants.AnyAsync()
+            ? await _context.TestVariants.MaxAsync(v => v.Number)
+            : 0;
+
     public async Task AddAsync(TestVariant variant)
     {
         _context.TestVariants.Add(variant);

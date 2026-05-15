@@ -58,9 +58,12 @@ public class TestVariantGeneratorService : ITestVariantGeneratorService
             }
         }
 
+        var maxNumber = await _testVariantRepository.GetMaxNumberAsync();
+
         var variant = new TestVariant
         {
             Id = Guid.NewGuid(),
+            Number = maxNumber + 1,
             GeneratedAt = DateTime.UtcNow,
             Questions = tvQuestions
         };
