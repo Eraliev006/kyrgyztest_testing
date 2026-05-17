@@ -260,6 +260,12 @@ public class ExamService : IExamService
         };
     }
 
+    public async Task<bool> HasActiveAttemptAsync(Guid candidateId)
+    {
+        var active = await _attemptRepository.GetActiveByCandidate(candidateId);
+        return active != null;
+    }
+
     private static bool IsCorrectMcq(Question question, CandidateAnswer answer)
     {
         if (answer.SelectedOptionId == null) return false;

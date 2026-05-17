@@ -10,4 +10,5 @@ public interface IExamService
     Task<SubmitSectionResultDto> SubmitSectionAsync(Guid attemptId, SectionType section);
     Task SaveAnswerAsync(SaveAnswerDto dto);
     Task<ResultResponseDto> SubmitAsync(Guid attemptId);
+    Task<bool> HasActiveAttemptAsync(Guid candidateId);
 }
