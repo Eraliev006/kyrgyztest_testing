@@ -11,11 +11,13 @@ public class TestVariantService : ITestVariantService
 {
     private readonly ITestVariantRepository _variantRepo;
     private readonly IQuestionRepository _questionRepo;
+    private readonly IAuditService _audit;
 
-    public TestVariantService(ITestVariantRepository variantRepo, IQuestionRepository questionRepo)
+    public TestVariantService(ITestVariantRepository variantRepo, IQuestionRepository questionRepo, IAuditService audit)
     {
         _variantRepo = variantRepo;
         _questionRepo = questionRepo;
+        _audit = audit;
     }
 
     public async Task<List<TestVariantSummaryDto>> GetAllAsync()
@@ -66,6 +68,7 @@ public class TestVariantService : ITestVariantService
 
         tvq.QuestionId = newQuestionId;
         await _variantRepo.SaveAsync();
+        await _audit.LogAsync("REPLACE_QUESTION", "TestVariant", variantId, $"В варианте заменён вопрос {questionId} на {newQuestionId}");
     }
 
     public async Task<List<VariantQuestionDto>> GetAvailableQuestionsAsync(Guid variantId, SectionType section, LanguageLevel level)

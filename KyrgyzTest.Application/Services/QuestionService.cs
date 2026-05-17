@@ -11,13 +11,16 @@ public class QuestionService : IQuestionService
 {
     private readonly IQuestionRepository _questionRepository;
     private readonly IMediaGroupRepository _mediaGroupRepository;
+    private readonly IAuditService _audit;
 
     public QuestionService(
         IQuestionRepository questionRepository,
-        IMediaGroupRepository mediaGroupRepository)
+        IMediaGroupRepository mediaGroupRepository,
+        IAuditService audit)
     {
         _questionRepository = questionRepository;
         _mediaGroupRepository = mediaGroupRepository;
+        _audit = audit;
     }
 
     public async Task<List<QuestionResponseDto>> GetAllAsync(SectionType? section, LanguageLevel? level)
@@ -66,6 +69,7 @@ public class QuestionService : IQuestionService
         };
 
         var created = await _questionRepository.CreateAsync(question);
+        await _audit.LogAsync("CREATE", "Question", created.Id, $"Создан вопрос (секция: {created.Section}, уровень: {created.Level})");
         return Map(created);
     }
 
@@ -90,6 +94,7 @@ public class QuestionService : IQuestionService
         }).ToList();
 
         var updated = await _questionRepository.UpdateAsync(question);
+        await _audit.LogAsync("UPDATE", "Question", id, $"Обновлён вопрос (секция: {updated.Section}, уровень: {updated.Level})");
         return Map(updated);
     }
 
@@ -99,6 +104,7 @@ public class QuestionService : IQuestionService
                        ?? throw new NotFoundException("Вопрос не найден");
 
         await _questionRepository.DeleteAsync(question.Id);
+        await _audit.LogAsync("DELETE", "Question", id, $"Удалён вопрос (секция: {question.Section}, уровень: {question.Level})");
     }
 
     public async Task<MediaGroupResponseDto> CreateMediaGroupAsync(CreateMediaGroupDto dto)
