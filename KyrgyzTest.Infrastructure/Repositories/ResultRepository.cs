@@ -32,6 +32,11 @@ public class ResultRepository : IResultRepository
 
     public async Task<List<Result>> GetFilteredAsync(Guid? organizationId, LanguageLevel? level, DateTime? dateFrom, DateTime? dateTo)
     {
+        if (dateFrom.HasValue)
+            dateFrom = DateTime.SpecifyKind(dateFrom.Value, DateTimeKind.Utc);
+        if (dateTo.HasValue)
+            dateTo = DateTime.SpecifyKind(dateTo.Value, DateTimeKind.Utc);
+
         var query = _context.Results
             .Include(r => r.Candidate)
                 .ThenInclude(c => c.Organization)
