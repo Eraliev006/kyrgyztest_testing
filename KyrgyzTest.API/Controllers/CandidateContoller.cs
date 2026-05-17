@@ -18,18 +18,20 @@ public class CandidateController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
-        => Ok(await _service.GetAllAsync());
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
+    [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] Guid? organizationId,
+        [FromQuery] DateTime? dateFrom,
+        [FromQuery] DateTime? dateTo,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        var candidate = await _service.GetByIdAsync(id);
-        return candidate == null ? NotFound() : Ok(candidate);
+        var result = await _service.GetPagedAsync(organizationId, dateFrom, dateTo, page, pageSize);
+        return Ok(result);
     }
 
     [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] string? inn, [FromQuery] string? code)
+    public async Task<IActionResult> Search([FromQuery] string? inn, [FromQuery] string? code, [FromQuery] string? fullName)
     {
         if (!string.IsNullOrEmpty(inn))
         {
@@ -43,13 +45,34 @@ public class CandidateController : ControllerBase
             return byCode == null ? NotFound() : Ok(byCode);
         }
 
-        return BadRequest("Укажите inn или code");
+        if (!string.IsNullOrEmpty(fullName))
+        {
+            var byName = await _service.SearchByNameAsync(fullName);
+            return Ok(byName);
+        }
+
+        return Ok(Array.Empty<object>());
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var candidate = await _service.GetByIdAsync(id);
+        return candidate == null ? NotFound() : Ok(candidate);
     }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCandidateDto dto)
     {
         var candidate = await _service.CreateAsync(dto);
+        return Ok(candidate);
+    }
+
+    [HttpPut("{id}")]
+    [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCandidateDto dto)
+    {
+        var candidate = await _service.UpdateAsync(id, dto);
         return Ok(candidate);
     }
 

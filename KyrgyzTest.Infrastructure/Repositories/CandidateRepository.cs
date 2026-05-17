@@ -26,6 +26,40 @@ public class CandidateRepository: ICandidateRepository
     public async Task<List<Candidate>> GetAllAsync()
         => await _context.Candidates.ToListAsync();
 
+    public async Task<List<Candidate>> SearchByNameAsync(string name)
+        => await _context.Candidates
+            .Where(x => EF.Functions.ILike(x.FullName, $"%{name}%"))
+            .ToListAsync();
+
+    public async Task<(List<Candidate> Items, int TotalCount)> GetPagedAsync(
+        Guid? organizationId, DateTime? dateFrom, DateTime? dateTo, int page, int pageSize)
+    {
+        var from = dateFrom.HasValue
+            ? DateTime.SpecifyKind(dateFrom.Value, DateTimeKind.Utc)
+            : DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+
+        var to = dateTo.HasValue
+            ? DateTime.SpecifyKind(dateTo.Value.AddDays(1), DateTimeKind.Utc)
+            : DateTime.SpecifyKind(DateTime.UtcNow.Date.AddDays(1), DateTimeKind.Utc);
+
+        var query = _context.Candidates.AsQueryable();
+
+        if (organizationId.HasValue)
+            query = query.Where(x => x.OrganizationId == organizationId);
+
+        query = query.Where(x => x.CreatedAt >= from);
+        query = query.Where(x => x.CreatedAt < to);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, total);
+    }
+
     public async Task<Candidate> CreateAsync(Candidate candidate)
     {
         _context.Candidates.Add(candidate);

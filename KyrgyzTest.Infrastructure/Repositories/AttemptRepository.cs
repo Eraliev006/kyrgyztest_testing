@@ -19,6 +19,11 @@ public class AttemptRepository : IAttemptRepository
         => await _context.Attempts
             .FirstOrDefaultAsync(a => a.CandidateId == candidateId && a.Status == AttemptStatus.InProgress);
 
+    public async Task<List<Attempt>> GetAllActiveByCandidate(Guid candidateId)
+        => await _context.Attempts
+            .Where(a => a.CandidateId == candidateId && a.Status == AttemptStatus.InProgress)
+            .ToListAsync();
+
     public async Task<Attempt?> GetByIdWithDetailsAsync(Guid id)
         => await _context.Attempts
             .Include(a => a.TestVariant)
