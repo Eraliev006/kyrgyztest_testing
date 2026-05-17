@@ -1,3 +1,4 @@
+using System.Text.Json;
 using KyrgyzTest.Application.DTOs;
 using KyrgyzTest.Application.Interfaces;
 using KyrgyzTest.Core.Entities;
@@ -10,10 +11,17 @@ namespace KyrgyzTest.Application.Services;
 public class ResultService : IResultService
 {
     private readonly IResultRepository _repository;
+    private readonly IAttemptRepository _attemptRepository;
+    private readonly ICandidateAnswerRepository _candidateAnswerRepository;
 
-    public ResultService(IResultRepository repository)
+    public ResultService(
+        IResultRepository repository,
+        IAttemptRepository attemptRepository,
+        ICandidateAnswerRepository candidateAnswerRepository)
     {
         _repository = repository;
+        _attemptRepository = attemptRepository;
+        _candidateAnswerRepository = candidateAnswerRepository;
     }
 
     public async Task<List<ResultWithCandidateDto>> GetAllAsync(Guid? organizationId, LanguageLevel? level, DateTime? dateFrom, DateTime? dateTo)
@@ -47,6 +55,69 @@ public class ResultService : IResultService
         };
 
         return stats;
+    }
+
+    public async Task<AttemptDetailDto> GetAttemptDetailsAsync(Guid attemptId)
+    {
+        var attempt = await _attemptRepository.GetByIdWithDetailsAsync(attemptId)
+            ?? throw new NotFoundException("Попытка не найдена");
+
+        var answers = await _candidateAnswerRepository.GetByAttemptIdAsync(attemptId);
+        var answerMap = answers.ToDictionary(a => a.QuestionId);
+
+        var result = new AttemptDetailDto
+        {
+            AttemptId = attempt.Id,
+            CandidateId = attempt.CandidateId,
+        };
+
+        foreach (var tvq in attempt.TestVariant.Questions)
+        {
+            var question = tvq.Question;
+            answerMap.TryGetValue(question.Id, out var candidateAnswer);
+
+            var correctOption = question.AnswerOptions.FirstOrDefault(o => o.IsCorrect);
+            var correctOrder = question.AnswerOptions
+                .Where(o => o.IsCorrect)
+                .OrderBy(o => o.OrderIndex)
+                .Select(o => o.Id)
+                .ToArray();
+
+            bool isCorrect = false;
+            if (candidateAnswer != null)
+            {
+                isCorrect = question.Type == QuestionType.MCQ
+                    ? correctOption?.Id == candidateAnswer.SelectedOptionId
+                    : IsCorrectOrdered(candidateAnswer.OrderedAnswer, correctOrder);
+            }
+
+            result.Answers.Add(new AttemptAnswerDetailDto
+            {
+                QuestionId = question.Id,
+                Content = question.Content,
+                Section = question.Section,
+                Level = question.Level,
+                Type = question.Type,
+                SelectedOptionId = candidateAnswer?.SelectedOptionId,
+                OrderedAnswer = candidateAnswer?.OrderedAnswer,
+                IsCorrect = isCorrect,
+                CorrectOptionId = question.Type == QuestionType.MCQ ? correctOption?.Id : null,
+                CorrectOrder = question.Type != QuestionType.MCQ ? correctOrder : null,
+            });
+        }
+
+        return result;
+    }
+
+    private static bool IsCorrectOrdered(string? orderedAnswer, Guid[] correctOrder)
+    {
+        if (string.IsNullOrEmpty(orderedAnswer)) return false;
+        try
+        {
+            var submitted = JsonSerializer.Deserialize<Guid[]>(orderedAnswer) ?? [];
+            return submitted.SequenceEqual(correctOrder);
+        }
+        catch { return false; }
     }
 
     private static ResultWithCandidateDto Map(Result r) => new()

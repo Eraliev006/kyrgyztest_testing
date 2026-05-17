@@ -35,6 +35,14 @@ public class ResultsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("{attemptId:guid}/details")]
+    [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    public async Task<IActionResult> GetAttemptDetails(Guid attemptId)
+    {
+        var details = await _service.GetAttemptDetailsAsync(attemptId);
+        return Ok(details);
+    }
+
     [HttpGet("stats")]
     public async Task<IActionResult> GetStats(
         [FromQuery] Guid? organizationId,
