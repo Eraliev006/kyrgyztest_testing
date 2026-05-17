@@ -1,5 +1,6 @@
 using KyrgyzTest.Application.DTOs;
 using Xunit;
+using KyrgyzTest.Application.Interfaces;
 using KyrgyzTest.Application.Services;
 using KyrgyzTest.Core.Entities;
 using KyrgyzTest.Core.Exceptions;
@@ -12,12 +13,15 @@ namespace KyrgyzTest.Tests;
 public class CandidateBlockTests
 {
     private readonly ICandidateRepository _repo = Substitute.For<ICandidateRepository>();
-    private CandidateService BuildService() => new(_repo);
+    private readonly IAttemptRepository _attemptRepo = Substitute.For<IAttemptRepository>();
+    private readonly IAuditService _audit = Substitute.For<IAuditService>();
+    private CandidateService BuildService() => new(_repo, _attemptRepo, _audit);
 
     private void SetupCandidate(Candidate candidate)
     {
         _repo.GetByIdAsync(candidate.Id).Returns(candidate);
         _repo.UpdateAsync(Arg.Any<Candidate>()).Returns(ci => ci.Arg<Candidate>());
+        _attemptRepo.GetAllActiveByCandidate(candidate.Id).Returns(new List<Attempt>());
     }
 
     // ── BlockAsync: срок не истёк (BlockedUntil в будущем) ───────────────────

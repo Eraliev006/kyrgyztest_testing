@@ -1,3 +1,4 @@
+using KyrgyzTest.Application.Interfaces;
 using KyrgyzTest.Application.Services;
 using Xunit;
 using KyrgyzTest.Core.Entities;
@@ -12,8 +13,9 @@ public class TestVariantReplaceTests
 {
     private readonly ITestVariantRepository _variantRepo = Substitute.For<ITestVariantRepository>();
     private readonly IQuestionRepository _questionRepo = Substitute.For<IQuestionRepository>();
+    private readonly IAuditService _audit = Substitute.For<IAuditService>();
 
-    private TestVariantService BuildService() => new(_variantRepo, _questionRepo);
+    private TestVariantService BuildService() => new(_variantRepo, _questionRepo, _audit);
 
     private static (TestVariant variant, Question oldQuestion) BuildVariantWithQuestion(
         SectionType section = SectionType.Grammar,

@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Xunit;
 using KyrgyzTest.Application.DTOs;
+using KyrgyzTest.Application.Interfaces;
 using KyrgyzTest.Application.Services;
 using KyrgyzTest.Core.Entities;
 using KyrgyzTest.Core.Interfaces;
@@ -11,8 +12,10 @@ namespace KyrgyzTest.Tests;
 public class CandidateAccessCodeTests
 {
     private readonly ICandidateRepository _repo = Substitute.For<ICandidateRepository>();
+    private readonly IAttemptRepository _attemptRepo = Substitute.For<IAttemptRepository>();
+    private readonly IAuditService _audit = Substitute.For<IAuditService>();
 
-    private CandidateService BuildService() => new(_repo);
+    private CandidateService BuildService() => new(_repo, _attemptRepo, _audit);
 
     public CandidateAccessCodeTests()
     {
