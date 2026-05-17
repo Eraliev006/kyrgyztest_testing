@@ -19,6 +19,7 @@ public static class ServiceExtension
         services.AddScoped<IOrganizationService, OrganizationService>();
         services.AddScoped<IResultService, ResultService>();
         services.AddScoped<ITopicService, TopicService>();
+        services.AddScoped<IAuditService, AuditService>();
         services.AddHttpContextAccessor();
         return services;
     }

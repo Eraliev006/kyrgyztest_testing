@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
     public DbSet<Result> Results { get; set; }
     public DbSet<CompletedSection> CompletedSections { get; set; }
     public DbSet<Topic> Topics { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
