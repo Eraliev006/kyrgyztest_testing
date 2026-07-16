@@ -34,9 +34,9 @@ public class AppDbContext : DbContext
             Id = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890"),
             FullName = "Super Admin",
             Login = "superadmin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+            PasswordHash = "$2a$11$sOqeCeQBLHNVc9dJp3HB5uop0mKLiXdJw8CGFyp7KBTn4kJM3I49i",
             Role = UserRole.SuperAdmin,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = new DateTime(2026, 5, 16, 20, 1, 14, 887, DateTimeKind.Utc).AddTicks(780)
         });
         
         modelBuilder.Entity<Candidate>()
@@ -122,6 +122,26 @@ public class AppDbContext : DbContext
             .HasOne(cs => cs.Attempt)
             .WithMany()
             .HasForeignKey(cs => cs.AttemptId);
+
+        modelBuilder.Entity<Candidate>()
+            .HasIndex(c => c.AccessCode)
+            .IsUnique();
+
+        modelBuilder.Entity<Candidate>()
+            .HasIndex(c => c.Inn)
+            .IsUnique();
+
+        modelBuilder.Entity<CompletedSection>()
+            .HasIndex(cs => new { cs.AttemptId, cs.Section })
+            .IsUnique();
+
+        modelBuilder.Entity<CandidateAnswer>()
+            .HasIndex(ca => new { ca.AttemptId, ca.QuestionId })
+            .IsUnique();
+
+        modelBuilder.Entity<Result>()
+            .HasIndex(r => r.AttemptId)
+            .IsUnique();
 
         base.OnModelCreating(modelBuilder);
     }
