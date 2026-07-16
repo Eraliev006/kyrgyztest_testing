@@ -11,8 +11,6 @@ riderModule.iml
 .gitignore
 
 # Docker
-Dockerfile
-docker-compose.yml
 .dockerignore
 
 # IDE
