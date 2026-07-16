@@ -9,6 +9,11 @@ build:
   script:
     - dotnet restore
     - dotnet build --no-restore
+  artifacts:
+    paths:
+      - "**/bin/"
+      - "**/obj/"
+    expire_in: 1 hour
   only:
     - develop
     - production
