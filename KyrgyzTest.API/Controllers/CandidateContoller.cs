@@ -11,10 +11,21 @@ namespace KyrgyzTest.API.Controllers;
 public class CandidateController : ControllerBase
 {
     private readonly ICandidateService _service;
+    private readonly IExamService _examService;
 
-    public CandidateController(ICandidateService service)
+    public CandidateController(ICandidateService service, IExamService examService)
     {
         _service = service;
+        _examService = examService;
+    }
+
+    [HttpGet("active-attempts")]
+    [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    [ProducesResponseType(typeof(List<ActiveAttemptDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetActiveAttempts()
+    {
+        var result = await _examService.GetActiveAttemptsAsync();
+        return Ok(result);
     }
 
     [HttpGet]

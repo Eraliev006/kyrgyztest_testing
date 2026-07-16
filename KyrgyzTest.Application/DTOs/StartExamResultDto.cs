@@ -14,7 +14,15 @@ public class ExamSectionDto
     public SectionType Section { get; set; }
     public int TimeLimitMinutes { get; set; }
     public bool IsCompleted { get; set; }
+    /// <summary>Null until the candidate actually opens the section (StartSectionAsync).</summary>
+    public DateTime? DeadlineUtc { get; set; }
     public List<ExamQuestionDto> Questions { get; set; } = new();
+}
+
+public class SectionStatusDto
+{
+    public bool IsCompleted { get; set; }
+    public DateTime? DeadlineUtc { get; set; }
 }
 
 public class ExamQuestionDto

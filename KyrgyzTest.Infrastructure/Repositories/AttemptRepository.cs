@@ -32,6 +32,15 @@ public class AttemptRepository : IAttemptRepository
                         .ThenInclude(q => q.AnswerOptions)
             .FirstOrDefaultAsync(a => a.Id == id);
 
+    public async Task<List<Attempt>> GetAllActiveWithDetailsAsync()
+        => await _context.Attempts
+            .Include(a => a.Candidate)
+            .Include(a => a.TestVariant)
+                .ThenInclude(tv => tv.Questions)
+                    .ThenInclude(tvq => tvq.Question)
+            .Where(a => a.Status == AttemptStatus.InProgress)
+            .ToListAsync();
+
     public async Task<Attempt> AddAsync(Attempt attempt)
     {
         _context.Attempts.Add(attempt);

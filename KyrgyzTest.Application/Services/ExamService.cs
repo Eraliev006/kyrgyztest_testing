@@ -17,6 +17,7 @@ public class ExamService : IExamService
     private readonly ICandidateAnswerRepository _candidateAnswerRepository;
     private readonly IResultRepository _resultRepository;
     private readonly ICompletedSectionRepository _completedSectionRepository;
+    private readonly ISectionTimingRepository _sectionTimingRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public ExamService(
@@ -27,6 +28,7 @@ public class ExamService : IExamService
         ICandidateAnswerRepository candidateAnswerRepository,
         IResultRepository resultRepository,
         ICompletedSectionRepository completedSectionRepository,
+        ISectionTimingRepository sectionTimingRepository,
         IUnitOfWork unitOfWork)
     {
         _candidateRepository = candidateRepository;
@@ -36,6 +38,7 @@ public class ExamService : IExamService
         _candidateAnswerRepository = candidateAnswerRepository;
         _resultRepository = resultRepository;
         _completedSectionRepository = completedSectionRepository;
+        _sectionTimingRepository = sectionTimingRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -104,6 +107,9 @@ public class ExamService : IExamService
 
         var configs = await _sectionConfigRepository.GetAll();
         var config = configs.FirstOrDefault(c => c.Section == section);
+        var timeLimitMinutes = config?.TimeLimitMinutes ?? 0;
+
+        var timing = await _sectionTimingRepository.GetOrStartAsync(attemptId, section);
 
         var questions = attempt.TestVariant.Questions
             .Where(vq => vq.Question.Section == section)
@@ -123,9 +129,26 @@ public class ExamService : IExamService
         return new ExamSectionDto
         {
             Section = section,
-            TimeLimitMinutes = config?.TimeLimitMinutes ?? 0,
+            TimeLimitMinutes = timeLimitMinutes,
+            DeadlineUtc = timing.StartedAt.AddMinutes(timeLimitMinutes),
             Questions = questions
         };
+    }
+
+    public async Task<SectionStatusDto> GetSectionStatusAsync(Guid attemptId, SectionType section)
+    {
+        var completedSections = await _completedSectionRepository.GetByAttemptIdAsync(attemptId);
+        var isCompleted = completedSections.Any(cs => cs.Section == section);
+
+        var timing = await _sectionTimingRepository.GetByAttemptAndSectionAsync(attemptId, section);
+        if (timing == null)
+            return new SectionStatusDto { IsCompleted = isCompleted, DeadlineUtc = null };
+
+        var configs = await _sectionConfigRepository.GetAll();
+        var config = configs.FirstOrDefault(c => c.Section == section);
+        var deadline = timing.StartedAt.AddMinutes(config?.TimeLimitMinutes ?? 0);
+
+        return new SectionStatusDto { IsCompleted = isCompleted, DeadlineUtc = deadline };
     }
 
     public async Task<SubmitSectionResultDto> SubmitSectionAsync(Guid attemptId, SectionType section)
@@ -320,5 +343,50 @@ public class ExamService : IExamService
     {
         var active = await _attemptRepository.GetActiveByCandidate(candidateId);
         return active != null;
+    }
+
+    public async Task<List<ActiveAttemptDto>> GetActiveAttemptsAsync()
+    {
+        var attempts = await _attemptRepository.GetAllActiveWithDetailsAsync();
+        var result = new List<ActiveAttemptDto>();
+
+        foreach (var attempt in attempts)
+        {
+            var completedSections = await _completedSectionRepository.GetByAttemptIdAsync(attempt.Id);
+            var completedSet = completedSections.Select(cs => cs.Section).ToHashSet();
+
+            var currentSection = attempt.TestVariant.Questions
+                .Select(tvq => tvq.Question.Section)
+                .Distinct()
+                .FirstOrDefault(s => !completedSet.Contains(s));
+
+            var hasCurrentSection = attempt.TestVariant.Questions
+                .Any(tvq => tvq.Question.Section == currentSection && !completedSet.Contains(currentSection));
+
+            DateTime? deadline = null;
+            if (hasCurrentSection)
+            {
+                var timing = await _sectionTimingRepository.GetByAttemptAndSectionAsync(attempt.Id, currentSection);
+                if (timing != null)
+                {
+                    var configs = await _sectionConfigRepository.GetAll();
+                    var config = configs.FirstOrDefault(c => c.Section == currentSection);
+                    deadline = timing.StartedAt.AddMinutes(config?.TimeLimitMinutes ?? 0);
+                }
+            }
+
+            result.Add(new ActiveAttemptDto
+            {
+                CandidateId = attempt.CandidateId,
+                FullName = attempt.Candidate.FullName,
+                Photo = attempt.Candidate.Photo,
+                AttemptId = attempt.Id,
+                AttemptStartedAt = attempt.StartedAt,
+                CurrentSection = hasCurrentSection ? currentSection : null,
+                SectionDeadlineUtc = deadline
+            });
+        }
+
+        return result;
     }
 }

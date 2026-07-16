@@ -7,6 +7,7 @@ public interface IAttemptRepository
     Task<Attempt?> GetActiveByCandidate(Guid candidateId);
     Task<List<Attempt>> GetAllActiveByCandidate(Guid candidateId);
     Task<Attempt?> GetByIdWithDetailsAsync(Guid id);
+    Task<List<Attempt>> GetAllActiveWithDetailsAsync();
     Task<Attempt> AddAsync(Attempt attempt);
     Task UpdateAsync(Attempt attempt);
 }

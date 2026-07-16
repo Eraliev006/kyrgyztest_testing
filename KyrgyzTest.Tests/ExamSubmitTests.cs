@@ -18,11 +18,12 @@ public class ExamSubmitTests
     private readonly ICandidateAnswerRepository _answerRepo = Substitute.For<ICandidateAnswerRepository>();
     private readonly IResultRepository _resultRepo = Substitute.For<IResultRepository>();
     private readonly ICompletedSectionRepository _completedSectionRepo = Substitute.For<ICompletedSectionRepository>();
+    private readonly ISectionTimingRepository _sectionTimingRepo = Substitute.For<ISectionTimingRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private ExamService BuildService() => new(
         _candidateRepo, _attemptRepo, _sectionConfigRepo,
-        _generator, _answerRepo, _resultRepo, _completedSectionRepo, _unitOfWork);
+        _generator, _answerRepo, _resultRepo, _completedSectionRepo, _sectionTimingRepo, _unitOfWork);
 
     [Fact]
     public async Task Submit_IsIdempotent_ReturnsExistingResult_WithoutCallingTryAdd()

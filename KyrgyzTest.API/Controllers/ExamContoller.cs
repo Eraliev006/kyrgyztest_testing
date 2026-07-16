@@ -1,5 +1,6 @@
 using KyrgyzTest.Application.DTOs;
 using KyrgyzTest.Application.Interfaces;
+using KyrgyzTest.Core.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KyrgyzTest.API.Controllers;
@@ -64,6 +65,14 @@ public class ExamController : ControllerBase
     public async Task<IActionResult> StartSection([FromBody] SectionRequestDto dto)
     {
         var result = await _examService.StartSectionAsync(dto.AttemptId, dto.Section);
+        return Ok(result);
+    }
+
+    [HttpGet("section/status")]
+    [ProducesResponseType(typeof(SectionStatusDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSectionStatus([FromQuery] Guid attemptId, [FromQuery] SectionType section)
+    {
+        var result = await _examService.GetSectionStatusAsync(attemptId, section);
         return Ok(result);
     }
 

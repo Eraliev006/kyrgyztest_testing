@@ -20,6 +20,7 @@ public class AppDbContext : DbContext
     public DbSet<CandidateAnswer> CandidateAnswers { get; set; }
     public DbSet<Result> Results { get; set; }
     public DbSet<CompletedSection> CompletedSections { get; set; }
+    public DbSet<SectionTiming> SectionTimings { get; set; }
     public DbSet<Topic> Topics { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
 
@@ -123,6 +124,11 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(cs => cs.AttemptId);
 
+        modelBuilder.Entity<SectionTiming>()
+            .HasOne(st => st.Attempt)
+            .WithMany()
+            .HasForeignKey(st => st.AttemptId);
+
         modelBuilder.Entity<Candidate>()
             .HasIndex(c => c.AccessCode)
             .IsUnique();
@@ -133,6 +139,10 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<CompletedSection>()
             .HasIndex(cs => new { cs.AttemptId, cs.Section })
+            .IsUnique();
+
+        modelBuilder.Entity<SectionTiming>()
+            .HasIndex(st => new { st.AttemptId, st.Section })
             .IsUnique();
 
         modelBuilder.Entity<CandidateAnswer>()
