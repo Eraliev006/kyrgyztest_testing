@@ -10,6 +10,11 @@ public static class AuthExtension
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        var jwtKey = configuration["Jwt:Key"];
+        if (string.IsNullOrWhiteSpace(jwtKey))
+            throw new InvalidOperationException(
+                "Jwt:Key is not configured. Set the Jwt__Key environment variable.");
+
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {

@@ -1,7 +1,5 @@
 using KyrgyzTest.API;
 using KyrgyzTest.API.Extensions;
-using KyrgyzTest.Core.Entities;
-using KyrgyzTest.Core.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -42,10 +40,18 @@ builder.Services.AddSwaggerGen(c =>
     });
     
 });
+builder.Services.AddMemoryCache();
 builder.Services.AddJwtAuth(builder.Configuration);
 
+if (string.IsNullOrWhiteSpace(builder.Configuration["ExamSettings:AccessPassword"]))
+    throw new InvalidOperationException(
+        "ExamSettings:AccessPassword is not configured. Set the ExamSettings__AccessPassword environment variable.");
 
-var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
+
+var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")
+    ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    ?? builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+    ?? [];
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -73,30 +79,13 @@ using (var scope = app.Services.CreateScope())
         {
             context.Database.Migrate();
             Console.WriteLine("--- Миграции успешно применены! ---");
-
-            var existing = context.Users.FirstOrDefault(u => u.Login == "superadmin");
-            if (existing != null)
-                context.Users.Remove(existing);
-
-            context.Users.Add(new Users
-            {
-                Id = Guid.NewGuid(),
-                FullName = "Super Admin",
-                Login = "superadmin",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-                Role = UserRole.SuperAdmin,
-                CreatedAt = DateTime.UtcNow
-            });
-            context.SaveChanges();
-            Console.WriteLine("--- SuperAdmin пересоздан ---");
-
             break;
         }
         catch (Exception ex)
         {
             retries--;
             Console.WriteLine($"--- База еще не готова, ждем... (Осталось попыток: {retries}) ---");
-            Thread.Sleep(5000); // Подождать 5 секунд перед следующей попыткой
+            await Task.Delay(5000);
             if (retries == 0) throw;
         }
     }
@@ -105,14 +94,14 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
-var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+var uploadsPath = Path.Combine(AppContext.BaseDirectory, "uploads");
 if (!Directory.Exists(uploadsPath))
     Directory.CreateDirectory(uploadsPath);
 
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "uploads")),
+        Path.Combine(AppContext.BaseDirectory, "uploads")),
     RequestPath = "/uploads"
 });
 app.UseCors("AllowFrontend");
