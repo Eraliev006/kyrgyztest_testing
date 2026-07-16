@@ -85,6 +85,7 @@ public class CandidateController : ControllerBase
     }
 
     [HttpPut("{id}/allow")]
+    [Authorize(Roles = "SuperAdmin,Director,Admin")]
     public async Task<IActionResult> AllowAccess(Guid id)
     {
         var candidate = await _service.AllowAccessAsync(id);
@@ -108,6 +109,7 @@ public class CandidateController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "SuperAdmin,Director,Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _service.DeleteAsync(id);

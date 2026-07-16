@@ -10,6 +10,7 @@ public static class ServiceExtension
     {
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddSingleton<CandidateCacheInvalidator>();
         services.AddScoped<ICandidateService, CandidateService>();
         services.AddScoped<IQuestionService, QuestionService>();
         services.AddScoped<ISectionConfigService, SectionConfigService>();

@@ -3,9 +3,12 @@ using Xunit;
 using KyrgyzTest.Application.Interfaces;
 using KyrgyzTest.Application.Services;
 using KyrgyzTest.Core.Entities;
+using KyrgyzTest.Core.Enums;
 using KyrgyzTest.Core.Exceptions;
 using KyrgyzTest.Core.Interfaces;
 using KyrgyzTest.Tests.Helpers;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace KyrgyzTest.Tests;
@@ -15,7 +18,10 @@ public class CandidateBlockTests
     private readonly ICandidateRepository _repo = Substitute.For<ICandidateRepository>();
     private readonly IAttemptRepository _attemptRepo = Substitute.For<IAttemptRepository>();
     private readonly IAuditService _audit = Substitute.For<IAuditService>();
-    private CandidateService BuildService() => new(_repo, _attemptRepo, _audit);
+    private readonly IMemoryCache _cache = new MemoryCache(Options.Create(new MemoryCacheOptions()));
+    private readonly IExamService _examService = Substitute.For<IExamService>();
+    private readonly CandidateCacheInvalidator _cacheInvalidator = new();
+    private CandidateService BuildService() => new(_repo, _attemptRepo, _audit, _cache, _examService, _cacheInvalidator);
 
     private void SetupCandidate(Candidate candidate)
     {
@@ -165,5 +171,66 @@ public class CandidateBlockTests
         var result = await BuildService().DenyAccessAsync(candidate.Id);
 
         Assert.Null(result.BlockedUntil);
+    }
+
+    // ── AllowAccessAsync ──────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task AllowAccess_Clears_BlockedUntil()
+    {
+        var candidate = TestData.DefaultCandidate(Guid.NewGuid());
+        candidate.BlockedUntil = DateTime.UtcNow.AddDays(7);
+        SetupCandidate(candidate);
+
+        var result = await BuildService().AllowAccessAsync(candidate.Id);
+
+        Assert.Null(result.BlockedUntil);
+    }
+
+    [Fact]
+    public async Task AllowAccess_Sets_IsAllowed_True_WhenCandidateWasBlocked()
+    {
+        var candidate = TestData.DefaultCandidate(Guid.NewGuid());
+        candidate.IsAllowed = false;
+        candidate.BlockedUntil = DateTime.UtcNow.AddDays(7);
+        SetupCandidate(candidate);
+
+        var result = await BuildService().AllowAccessAsync(candidate.Id);
+
+        Assert.True(result.IsAllowed);
+        Assert.Null(result.BlockedUntil);
+    }
+
+    // ── BlockAsync: завершение активных попыток ───────────────────────────────
+
+    [Fact]
+    public async Task Block_TerminatesActiveAttempt()
+    {
+        var candidate = TestData.DefaultCandidate(Guid.NewGuid());
+        var activeAttempt = new Attempt
+        {
+            Id = Guid.NewGuid(),
+            CandidateId = candidate.Id,
+            Status = AttemptStatus.InProgress
+        };
+
+        _repo.GetByIdAsync(candidate.Id).Returns(candidate);
+        _repo.UpdateAsync(Arg.Any<Candidate>()).Returns(ci => ci.Arg<Candidate>());
+        _attemptRepo.GetAllActiveByCandidate(candidate.Id).Returns(new List<Attempt> { activeAttempt });
+
+        await BuildService().BlockAsync(candidate.Id, new BlockCandidateDto(1, "days"));
+
+        await _examService.Received(1).SubmitAsync(activeAttempt.Id);
+    }
+
+    [Fact]
+    public async Task Block_NoActiveAttempts_DoesNotCallAttemptUpdate()
+    {
+        var candidate = TestData.DefaultCandidate(Guid.NewGuid());
+        SetupCandidate(candidate); // возвращает пустой список активных попыток
+
+        await BuildService().BlockAsync(candidate.Id, new BlockCandidateDto(1, "days"));
+
+        await _examService.DidNotReceive().SubmitAsync(Arg.Any<Guid>());
     }
 }
