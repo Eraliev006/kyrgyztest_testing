@@ -1,5 +1,5 @@
-using System.Text.Json;
 using KyrgyzTest.Application.DTOs;
+using KyrgyzTest.Application.Helpers;
 using KyrgyzTest.Application.Interfaces;
 using KyrgyzTest.Core.Entities;
 using KyrgyzTest.Core.Enums;
@@ -88,7 +88,7 @@ public class ResultService : IResultService
             {
                 isCorrect = question.Type == QuestionType.MCQ
                     ? correctOption?.Id == candidateAnswer.SelectedOptionId
-                    : IsCorrectOrdered(candidateAnswer.OrderedAnswer, correctOrder);
+                    : ScoringHelper.IsCorrectOrdered(candidateAnswer.OrderedAnswer, correctOrder);
             }
 
             result.Answers.Add(new AttemptAnswerDetailDto
@@ -107,17 +107,6 @@ public class ResultService : IResultService
         }
 
         return result;
-    }
-
-    private static bool IsCorrectOrdered(string? orderedAnswer, Guid[] correctOrder)
-    {
-        if (string.IsNullOrEmpty(orderedAnswer)) return false;
-        try
-        {
-            var submitted = JsonSerializer.Deserialize<Guid[]>(orderedAnswer) ?? [];
-            return submitted.SequenceEqual(correctOrder);
-        }
-        catch { return false; }
     }
 
     private static ResultWithCandidateDto Map(Result r) => new()

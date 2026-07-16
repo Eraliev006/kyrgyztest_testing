@@ -19,22 +19,28 @@ public class ExamScoringTests
     private readonly ICandidateAnswerRepository _answerRepo = Substitute.For<ICandidateAnswerRepository>();
     private readonly IResultRepository _resultRepo = Substitute.For<IResultRepository>();
     private readonly ICompletedSectionRepository _completedSectionRepo = Substitute.For<ICompletedSectionRepository>();
+    private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private ExamService BuildService() => new(
         _candidateRepo, _attemptRepo, _sectionConfigRepo,
-        _generator, _answerRepo, _resultRepo, _completedSectionRepo);
+        _generator, _answerRepo, _resultRepo, _completedSectionRepo, _unitOfWork);
 
     private async Task<Result> SubmitWithAnswers(Attempt attempt, List<CandidateAnswer> answers)
     {
         _attemptRepo.GetByIdWithDetailsAsync(attempt.Id).Returns(attempt);
         _answerRepo.GetByAttemptIdAsync(attempt.Id).Returns(answers);
+        _resultRepo.GetByAttemptIdAsync(attempt.Id).Returns((Result?)null);
         _candidateRepo.GetByIdAsync(attempt.CandidateId)
             .Returns(TestData.DefaultCandidate(attempt.CandidateId));
         _candidateRepo.UpdateAsync(Arg.Any<Candidate>())
             .Returns(ci => ci.Arg<Candidate>());
 
         Result? saved = null;
-        await _resultRepo.AddAsync(Arg.Do<Result>(r => saved = r));
+        _resultRepo.TryAddAsync(Arg.Any<Result>()).Returns(ci =>
+        {
+            saved = ci.Arg<Result>();
+            return true;
+        });
 
         await BuildService().SubmitAsync(attempt.Id);
         return saved!;

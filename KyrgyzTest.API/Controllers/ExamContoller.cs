@@ -43,9 +43,6 @@ public class ExamController : ControllerBase
         if (!candidate.IsAllowed)
             return Forbid();
 
-        if (await _examService.HasActiveAttemptAsync(candidate.Id))
-            return StatusCode(403, "Кандидат в данный момент проходит тест");
-
         return Ok(candidate);
     }
 

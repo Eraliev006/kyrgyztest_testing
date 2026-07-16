@@ -1,5 +1,5 @@
-using System.Text.Json;
 using KyrgyzTest.Application.DTOs;
+using KyrgyzTest.Application.Helpers;
 using KyrgyzTest.Application.Interfaces;
 using KyrgyzTest.Core.Entities;
 using KyrgyzTest.Core.Enums;
@@ -17,6 +17,7 @@ public class ExamService : IExamService
     private readonly ICandidateAnswerRepository _candidateAnswerRepository;
     private readonly IResultRepository _resultRepository;
     private readonly ICompletedSectionRepository _completedSectionRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public ExamService(
         ICandidateRepository candidateRepository,
@@ -25,7 +26,8 @@ public class ExamService : IExamService
         ITestVariantGeneratorService generatorService,
         ICandidateAnswerRepository candidateAnswerRepository,
         IResultRepository resultRepository,
-        ICompletedSectionRepository completedSectionRepository)
+        ICompletedSectionRepository completedSectionRepository,
+        IUnitOfWork unitOfWork)
     {
         _candidateRepository = candidateRepository;
         _attemptRepository = attemptRepository;
@@ -34,6 +36,7 @@ public class ExamService : IExamService
         _candidateAnswerRepository = candidateAnswerRepository;
         _resultRepository = resultRepository;
         _completedSectionRepository = completedSectionRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<StartExamResultDto> StartAsync(Guid candidateId)
@@ -46,7 +49,11 @@ public class ExamService : IExamService
 
         var active = await _attemptRepository.GetActiveByCandidate(candidateId);
         if (active != null)
-            throw new BusinessException("У кандидата уже есть активная попытка");
+        {
+            var existing = await _attemptRepository.GetByIdWithDetailsAsync(active.Id)
+                ?? throw new NotFoundException($"Попытка {active.Id} не найдена");
+            return await BuildStartResultAsync(existing.Id, existing.TestVariant.Questions);
+        }
 
         var testVariant = await _generatorService.GenerateAsync();
 
@@ -60,13 +67,18 @@ public class ExamService : IExamService
         };
         await _attemptRepository.AddAsync(attempt);
 
+        return await BuildStartResultAsync(attempt.Id, testVariant.Questions);
+    }
+
+    private async Task<StartExamResultDto> BuildStartResultAsync(Guid attemptId, IEnumerable<TestVariantQuestion> variantQuestions)
+    {
         var configs = await _sectionConfigRepository.GetAll();
         var configBySection = configs.ToDictionary(c => c.Section);
 
-        var completedSections = await _completedSectionRepository.GetByAttemptIdAsync(attempt.Id);
+        var completedSections = await _completedSectionRepository.GetByAttemptIdAsync(attemptId);
         var completedSet = completedSections.Select(cs => cs.Section).ToHashSet();
 
-        var sections = testVariant.Questions
+        var sections = variantQuestions
             .GroupBy(vq => vq.Question.Section)
             .Select(g =>
             {
@@ -75,11 +87,7 @@ public class ExamService : IExamService
                 return new ExamSectionDto { Section = sectionType, TimeLimitMinutes = timeLimit, IsCompleted = completedSet.Contains(sectionType) };
             }).ToList();
 
-        return new StartExamResultDto
-        {
-            AttemptId = attempt.Id,
-            Sections = sections
-        };
+        return new StartExamResultDto { AttemptId = attemptId, Sections = sections };
     }
 
     public async Task<ExamSectionDto> StartSectionAsync(Guid attemptId, SectionType section)
@@ -132,13 +140,15 @@ public class ExamService : IExamService
         if (completedSections.Any(cs => cs.Section == section))
             throw new BusinessException($"Секция {section} уже завершена");
 
-        await _completedSectionRepository.AddAsync(new CompletedSection
+        var inserted = await _completedSectionRepository.TryAddAsync(new CompletedSection
         {
             Id = Guid.NewGuid(),
             AttemptId = attemptId,
             Section = section,
             CompletedAt = DateTime.UtcNow
         });
+        if (!inserted)
+            throw new BusinessException($"Секция {section} уже завершена");
 
         var totalSections = attempt.TestVariant.Questions
             .Select(tvq => tvq.Question.Section)
@@ -179,6 +189,11 @@ public class ExamService : IExamService
         var attempt = await _attemptRepository.GetByIdWithDetailsAsync(attemptId)
             ?? throw new NotFoundException($"Попытка {attemptId} не найдена");
 
+        // Idempotency: if Result already exists, finish any partial cleanup and return it.
+        var existingResult = await _resultRepository.GetByAttemptIdAsync(attemptId);
+        if (existingResult != null)
+            return await FinishCleanupAndMapAsync(attempt, existingResult);
+
         if (attempt.Status != AttemptStatus.InProgress)
             throw new BusinessException("Попытка не активна");
 
@@ -195,8 +210,8 @@ public class ExamService : IExamService
                 continue;
 
             bool isCorrect = question.Type == QuestionType.MCQ
-                ? IsCorrectMcq(question, candidateAnswer)
-                : IsCorrectOrdered(question, candidateAnswer);
+                ? ScoringHelper.IsCorrectMcq(question, candidateAnswer)
+                : ScoringHelper.IsCorrectOrdered(question, candidateAnswer);
 
             if (!isCorrect) continue;
 
@@ -233,66 +248,77 @@ public class ExamService : IExamService
             TotalScore = totalScore,
             CreatedAt = DateTime.UtcNow
         };
-        await _resultRepository.AddAsync(result);
 
-        attempt.Status = AttemptStatus.Completed;
-        attempt.SubmittedAt = DateTime.UtcNow;
-        await _attemptRepository.UpdateAsync(attempt);
-
-        var candidate = await _candidateRepository.GetByIdAsync(attempt.CandidateId)
-            ?? throw new NotFoundException($"Кандидат {attempt.CandidateId} не найден");
-        candidate.IsAllowed = false;
-        candidate.Photo = null;
-        await _candidateRepository.UpdateAsync(candidate);
-
-        return new ResultResponseDto
+        await _unitOfWork.BeginTransactionAsync();
+        try
         {
-            Id = result.Id,
-            AttemptId = result.AttemptId,
-            CandidateId = result.CandidateId,
-            Level = result.Level,
-            GrammarScore = result.GrammarScore,
-            ListeningScore = result.ListeningScore,
-            ReadingScore = result.ReadingScore,
-            WritingScore = result.WritingScore,
-            TotalScore = result.TotalScore,
-            CreatedAt = result.CreatedAt
-        };
+            var inserted = await _resultRepository.TryAddAsync(result);
+            if (!inserted)
+            {
+                // Concurrent race: another request inserted Result first.
+                await _unitOfWork.RollbackAsync();
+                var raceResult = await _resultRepository.GetByAttemptIdAsync(attemptId)
+                    ?? throw new BusinessException("Попытка уже завершается");
+                return await FinishCleanupAndMapAsync(attempt, raceResult);
+            }
+
+            attempt.Status = AttemptStatus.Completed;
+            attempt.SubmittedAt = DateTime.UtcNow;
+            await _attemptRepository.UpdateAsync(attempt);
+
+            var candidate = await _candidateRepository.GetByIdAsync(attempt.CandidateId)
+                ?? throw new NotFoundException($"Кандидат {attempt.CandidateId} не найден");
+            candidate.IsAllowed = false;
+            candidate.Photo = null;
+            await _candidateRepository.UpdateAsync(candidate);
+
+            await _unitOfWork.CommitAsync();
+            return MapResult(result);
+        }
+        catch
+        {
+            await _unitOfWork.RollbackAsync();
+            throw;
+        }
     }
+
+    private async Task<ResultResponseDto> FinishCleanupAndMapAsync(Attempt attempt, Result result)
+    {
+        if (attempt.Status == AttemptStatus.InProgress)
+        {
+            attempt.Status = AttemptStatus.Completed;
+            attempt.SubmittedAt ??= DateTime.UtcNow;
+            await _attemptRepository.UpdateAsync(attempt);
+        }
+
+        var candidate = await _candidateRepository.GetByIdAsync(attempt.CandidateId);
+        if (candidate is { IsAllowed: true })
+        {
+            candidate.IsAllowed = false;
+            candidate.Photo = null;
+            await _candidateRepository.UpdateAsync(candidate);
+        }
+
+        return MapResult(result);
+    }
+
+    private static ResultResponseDto MapResult(Result r) => new()
+    {
+        Id = r.Id,
+        AttemptId = r.AttemptId,
+        CandidateId = r.CandidateId,
+        Level = r.Level,
+        GrammarScore = r.GrammarScore,
+        ListeningScore = r.ListeningScore,
+        ReadingScore = r.ReadingScore,
+        WritingScore = r.WritingScore,
+        TotalScore = r.TotalScore,
+        CreatedAt = r.CreatedAt
+    };
 
     public async Task<bool> HasActiveAttemptAsync(Guid candidateId)
     {
         var active = await _attemptRepository.GetActiveByCandidate(candidateId);
         return active != null;
-    }
-
-    private static bool IsCorrectMcq(Question question, CandidateAnswer answer)
-    {
-        if (answer.SelectedOptionId == null) return false;
-        var correctOption = question.AnswerOptions.FirstOrDefault(o => o.IsCorrect);
-        return correctOption?.Id == answer.SelectedOptionId;
-    }
-
-    private static bool IsCorrectOrdered(Question question, CandidateAnswer answer)
-    {
-        if (string.IsNullOrEmpty(answer.OrderedAnswer)) return false;
-
-        Guid[] submitted;
-        try
-        {
-            submitted = JsonSerializer.Deserialize<Guid[]>(answer.OrderedAnswer) ?? [];
-        }
-        catch
-        {
-            return false;
-        }
-
-        var correctOrder = question.AnswerOptions
-            .Where(o => o.IsCorrect)
-            .OrderBy(o => o.OrderIndex)
-            .Select(o => o.Id)
-            .ToArray();
-
-        return submitted.SequenceEqual(correctOrder);
     }
 }

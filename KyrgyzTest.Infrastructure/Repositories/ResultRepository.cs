@@ -3,6 +3,7 @@ using KyrgyzTest.Core.Enums;
 using KyrgyzTest.Core.Interfaces;
 using KyrgyzTest.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace KyrgyzTest.Infrastructure.Repositories;
 
@@ -19,6 +20,21 @@ public class ResultRepository : IResultRepository
     {
         _context.Results.Add(result);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> TryAddAsync(Result result)
+    {
+        _context.Results.Add(result);
+        try
+        {
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23505")
+        {
+            _context.Entry(result).State = EntityState.Detached;
+            return false;
+        }
     }
 
     public async Task<Result?> GetByAttemptIdAsync(Guid attemptId)

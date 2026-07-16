@@ -1,4 +1,5 @@
 ﻿using KyrgyzTest.Core.Interfaces;
+using KyrgyzTest.Infrastructure.Persistence;
 using KyrgyzTest.Infrastructure.Repositories;
 
 namespace KyrgyzTest.API.Extensions;
@@ -21,6 +22,7 @@ public static class RepositoryExtension
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         services.AddScoped<ITopicRepository, TopicRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
     } 
