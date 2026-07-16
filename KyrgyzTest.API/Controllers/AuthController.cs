@@ -16,6 +16,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
         var result = await _authService.LoginUser(dto);

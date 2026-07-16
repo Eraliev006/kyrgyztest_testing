@@ -18,11 +18,13 @@ public class OrganizationController : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(List<OrganizationDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll()
         => Ok(await _service.GetAllAsync());
 
     [HttpPost]
     [Authorize(Roles = "SuperAdmin,Director")]
+    [ProducesResponseType(typeof(OrganizationDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Create([FromBody] CreateOrganizationDto dto)
     {
         var org = await _service.CreateAsync(dto);
@@ -31,6 +33,7 @@ public class OrganizationController : ControllerBase
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "SuperAdmin,Director")]
+    [ProducesResponseType(typeof(OrganizationDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Update(Guid id, [FromBody] CreateOrganizationDto dto)
     {
         var org = await _service.UpdateAsync(id, dto);
@@ -39,6 +42,7 @@ public class OrganizationController : ControllerBase
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "SuperAdmin,Director")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _service.DeleteAsync(id);

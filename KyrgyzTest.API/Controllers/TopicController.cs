@@ -19,10 +19,13 @@ public class TopicController : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(List<TopicDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] SectionType? section)
         => Ok(await _service.GetAllAsync(section));
 
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(TopicDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var topic = await _service.GetByIdAsync(id);
@@ -30,14 +33,17 @@ public class TopicController : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(TopicDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Create([FromBody] CreateTopicDto dto)
         => Ok(await _service.CreateAsync(dto));
 
     [HttpPut("{id}")]
+    [ProducesResponseType(typeof(TopicDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Update(Guid id, [FromBody] CreateTopicDto dto)
         => Ok(await _service.UpdateAsync(id, dto));
 
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _service.DeleteAsync(id);

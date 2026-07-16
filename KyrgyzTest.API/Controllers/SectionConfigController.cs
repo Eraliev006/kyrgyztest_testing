@@ -18,12 +18,15 @@ public class SectionConfigController : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(List<SectionConfigResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll()
     {
         return Ok(await _service.GetAll());
     }
 
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(SectionConfigResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var config = await _service.GetById(id);
@@ -31,6 +34,7 @@ public class SectionConfigController : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(SectionConfigResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Create(CreateSectionConfigDto dto)
     {
         var config = await _service.Create(dto);
@@ -38,6 +42,7 @@ public class SectionConfigController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [ProducesResponseType(typeof(SectionConfigResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Update(Guid id, CreateSectionConfigDto dto)
     {
         var config = await _service.Update(id, dto);
@@ -45,6 +50,7 @@ public class SectionConfigController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [ProducesResponseType(typeof(SectionConfigResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var config = await _service.Delete(id);

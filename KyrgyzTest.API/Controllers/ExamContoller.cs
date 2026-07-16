@@ -20,6 +20,8 @@ public class ExamController : ControllerBase
     }
 
     [HttpPost("unlock")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public IActionResult Unlock([FromBody] UnlockDto dto)
     {
         var password = _configuration["ExamSettings:AccessPassword"];
@@ -30,6 +32,9 @@ public class ExamController : ControllerBase
     }
 
     [HttpPost("login")]
+    [ProducesResponseType(typeof(CandidateResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Login([FromBody] ExamLoginDto dto)
     {
         var candidate = await _candidateService.GetByAccessCodeAsync(dto.AccessCode);
@@ -47,6 +52,7 @@ public class ExamController : ControllerBase
     }
 
     [HttpPost("start")]
+    [ProducesResponseType(typeof(StartExamResultDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Start([FromBody] StartExamRequestDto dto)
     {
         var result = await _examService.StartAsync(dto.CandidateId);
@@ -54,6 +60,7 @@ public class ExamController : ControllerBase
     }
 
     [HttpPost("section/start")]
+    [ProducesResponseType(typeof(ExamSectionDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> StartSection([FromBody] SectionRequestDto dto)
     {
         var result = await _examService.StartSectionAsync(dto.AttemptId, dto.Section);
@@ -61,6 +68,7 @@ public class ExamController : ControllerBase
     }
 
     [HttpPost("section/submit")]
+    [ProducesResponseType(typeof(SubmitSectionResultDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> SubmitSection([FromBody] SectionRequestDto dto)
     {
         var result = await _examService.SubmitSectionAsync(dto.AttemptId, dto.Section);
@@ -68,6 +76,7 @@ public class ExamController : ControllerBase
     }
 
     [HttpPost("answer")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> SaveAnswer([FromBody] SaveAnswerDto dto)
     {
         await _examService.SaveAnswerAsync(dto);
@@ -75,6 +84,7 @@ public class ExamController : ControllerBase
     }
 
     [HttpPost("submit")]
+    [ProducesResponseType(typeof(ResultResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Submit([FromBody] SubmitExamDto dto)
     {
         var result = await _examService.SubmitAsync(dto.AttemptId);

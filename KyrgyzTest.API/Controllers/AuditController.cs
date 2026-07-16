@@ -1,3 +1,4 @@
+using KyrgyzTest.Application.DTOs;
 using KyrgyzTest.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +18,7 @@ public class AuditController : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(List<AuditLogResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAuditLogs(
         [FromQuery] DateTime? dateFrom,
         [FromQuery] DateTime? dateTo,

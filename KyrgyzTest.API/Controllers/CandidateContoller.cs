@@ -19,6 +19,7 @@ public class CandidateController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    [ProducesResponseType(typeof(PagedResultDto<CandidateResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPaged(
         [FromQuery] Guid? organizationId,
         [FromQuery] DateTime? dateFrom,
@@ -55,6 +56,8 @@ public class CandidateController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(CandidateResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var candidate = await _service.GetByIdAsync(id);
@@ -62,6 +65,7 @@ public class CandidateController : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(CandidateResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Create([FromBody] CreateCandidateDto dto)
     {
         var candidate = await _service.CreateAsync(dto);
@@ -70,6 +74,7 @@ public class CandidateController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    [ProducesResponseType(typeof(CandidateResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCandidateDto dto)
     {
         var candidate = await _service.UpdateAsync(id, dto);
@@ -78,6 +83,7 @@ public class CandidateController : ControllerBase
 
     [HttpPut("{id}/photo")]
     [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    [ProducesResponseType(typeof(CandidateResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UploadPhoto(Guid id, [FromBody] UploadPhotoDto dto)
     {
         var candidate = await _service.UploadPhotoAsync(id, dto.Photo);
@@ -86,6 +92,7 @@ public class CandidateController : ControllerBase
 
     [HttpPut("{id}/allow")]
     [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    [ProducesResponseType(typeof(CandidateResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> AllowAccess(Guid id)
     {
         var candidate = await _service.AllowAccessAsync(id);
@@ -94,6 +101,7 @@ public class CandidateController : ControllerBase
 
     [HttpPut("{id}/deny")]
     [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    [ProducesResponseType(typeof(CandidateResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> DenyAccess(Guid id)
     {
         var candidate = await _service.DenyAccessAsync(id);
@@ -102,6 +110,7 @@ public class CandidateController : ControllerBase
 
     [HttpPut("{id}/block")]
     [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    [ProducesResponseType(typeof(CandidateResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Block(Guid id, [FromBody] BlockCandidateDto dto)
     {
         var candidate = await _service.BlockAsync(id, dto);
@@ -110,6 +119,7 @@ public class CandidateController : ControllerBase
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _service.DeleteAsync(id);

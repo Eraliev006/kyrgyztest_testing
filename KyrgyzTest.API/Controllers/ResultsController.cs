@@ -1,3 +1,4 @@
+using KyrgyzTest.Application.DTOs;
 using KyrgyzTest.Application.Interfaces;
 using KyrgyzTest.Core.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -18,6 +19,7 @@ public class ResultsController : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(List<ResultWithCandidateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? organizationId,
         [FromQuery] LanguageLevel? level,
@@ -29,6 +31,7 @@ public class ResultsController : ControllerBase
     }
 
     [HttpGet("{candidateId:guid}")]
+    [ProducesResponseType(typeof(ResultWithCandidateDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByCandidate(Guid candidateId)
     {
         var result = await _service.GetByCandidateIdAsync(candidateId);
@@ -37,6 +40,7 @@ public class ResultsController : ControllerBase
 
     [HttpGet("{attemptId:guid}/details")]
     [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    [ProducesResponseType(typeof(AttemptDetailDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAttemptDetails(Guid attemptId)
     {
         var details = await _service.GetAttemptDetailsAsync(attemptId);
@@ -44,6 +48,7 @@ public class ResultsController : ControllerBase
     }
 
     [HttpGet("stats")]
+    [ProducesResponseType(typeof(OrgStatsDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats(
         [FromQuery] Guid? organizationId,
         [FromQuery] DateTime? dateFrom,
