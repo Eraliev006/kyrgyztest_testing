@@ -51,3 +51,8 @@ Thumbs.db
 *.sh
 
 GEMINI.md
+
+# AI agent tooling/config (local dev aid, not part of the shipped project)
+.claude/
+CLAUDE.md
+AGENTS.md
