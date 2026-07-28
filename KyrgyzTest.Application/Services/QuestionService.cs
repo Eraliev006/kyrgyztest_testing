@@ -37,13 +37,17 @@ public class QuestionService : IQuestionService
         if (level.HasValue && !section.HasValue)
             questions = questions.Where(q => q.Level == level.Value).ToList();
 
-        return questions.Select(Map).ToList();
+        var usageCounts = await _questionRepository.GetVariantUsageCountsAsync(questions.Select(q => q.Id));
+        return questions.Select(q => Map(q, usageCounts.GetValueOrDefault(q.Id))).ToList();
     }
 
     public async Task<QuestionResponseDto?> GetByIdAsync(Guid id)
     {
         var question = await _questionRepository.GetByIdAsync(id);
-        return question == null ? null : Map(question);
+        if (question == null) return null;
+
+        var usageCounts = await _questionRepository.GetVariantUsageCountsAsync([id]);
+        return Map(question, usageCounts.GetValueOrDefault(id));
     }
 
     public async Task<QuestionResponseDto> CreateAsync(CreateQuestionDto dto)
@@ -95,7 +99,9 @@ public class QuestionService : IQuestionService
 
         var updated = await _questionRepository.UpdateAsync(question);
         await _audit.LogAsync("UPDATE", "Question", id, $"Обновлён вопрос (секция: {updated.Section}, уровень: {updated.Level})");
-        return Map(updated);
+
+        var usageCounts = await _questionRepository.GetVariantUsageCountsAsync([id]);
+        return Map(updated, usageCounts.GetValueOrDefault(id));
     }
 
     public async Task DeleteAsync(Guid id)
@@ -126,7 +132,7 @@ public class QuestionService : IQuestionService
         };
     }
 
-    private static QuestionResponseDto Map(Question q) => new()
+    private static QuestionResponseDto Map(Question q, int usedInVariantCount = 0) => new()
     {
         Id = q.Id,
         Section = q.Section,
@@ -139,6 +145,7 @@ public class QuestionService : IQuestionService
         TopicId = q.TopicId,
         TopicName = q.Topic?.Name,
         CreatedAt = q.CreatedAt,
+        UsedInVariantCount = usedInVariantCount,
         AnswerOptions = q.AnswerOptions.Select(a => new AnswerOptionResponseDto
         {
             Id = a.Id,

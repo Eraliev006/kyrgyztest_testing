@@ -15,21 +15,23 @@ public class ExamScoringTests
     private readonly ICandidateRepository _candidateRepo = Substitute.For<ICandidateRepository>();
     private readonly IAttemptRepository _attemptRepo = Substitute.For<IAttemptRepository>();
     private readonly ISectionConfigRepository _sectionConfigRepo = Substitute.For<ISectionConfigRepository>();
-    private readonly ITestVariantGeneratorService _generator = Substitute.For<ITestVariantGeneratorService>();
+    private readonly ITestVariantRepository _variantRepo = Substitute.For<ITestVariantRepository>();
     private readonly ICandidateAnswerRepository _answerRepo = Substitute.For<ICandidateAnswerRepository>();
     private readonly IResultRepository _resultRepo = Substitute.For<IResultRepository>();
     private readonly ICompletedSectionRepository _completedSectionRepo = Substitute.For<ICompletedSectionRepository>();
     private readonly ISectionTimingRepository _sectionTimingRepo = Substitute.For<ISectionTimingRepository>();
+    private readonly IManualGradeRepository _manualGradeRepo = Substitute.For<IManualGradeRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private ExamService BuildService() => new(
         _candidateRepo, _attemptRepo, _sectionConfigRepo,
-        _generator, _answerRepo, _resultRepo, _completedSectionRepo, _sectionTimingRepo, _unitOfWork);
+        _variantRepo, _answerRepo, _resultRepo, _completedSectionRepo, _sectionTimingRepo, _manualGradeRepo, _unitOfWork);
 
     private async Task<Result> SubmitWithAnswers(Attempt attempt, List<CandidateAnswer> answers)
     {
         _attemptRepo.GetByIdWithDetailsAsync(attempt.Id).Returns(attempt);
         _answerRepo.GetByAttemptIdAsync(attempt.Id).Returns(answers);
+        _manualGradeRepo.GetByAttemptIdAsync(attempt.Id).Returns(new List<ManualGrade>());
         _resultRepo.GetByAttemptIdAsync(attempt.Id).Returns((Result?)null);
         _candidateRepo.GetByIdAsync(attempt.CandidateId)
             .Returns(TestData.DefaultCandidate(attempt.CandidateId));

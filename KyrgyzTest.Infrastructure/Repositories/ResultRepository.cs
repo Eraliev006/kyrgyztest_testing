@@ -40,6 +40,12 @@ public class ResultRepository : IResultRepository
     public async Task<Result?> GetByAttemptIdAsync(Guid attemptId)
         => await _context.Results.FirstOrDefaultAsync(r => r.AttemptId == attemptId);
 
+    public async Task UpdateAsync(Result result)
+    {
+        _context.Results.Update(result);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<List<Result>> GetByCandidateIdAsync(Guid candidateId)
         => await _context.Results.Where(r => r.CandidateId == candidateId).ToListAsync();
 
@@ -56,6 +62,7 @@ public class ResultRepository : IResultRepository
         var query = _context.Results
             .Include(r => r.Candidate)
                 .ThenInclude(c => c.Organization)
+            .Include(r => r.Attempt)
             .AsQueryable();
 
         if (organizationId.HasValue)
@@ -77,6 +84,7 @@ public class ResultRepository : IResultRepository
         => await _context.Results
             .Include(r => r.Candidate)
                 .ThenInclude(c => c.Organization)
+            .Include(r => r.Attempt)
             .Where(r => r.CandidateId == candidateId)
             .OrderByDescending(r => r.CreatedAt)
             .FirstOrDefaultAsync();

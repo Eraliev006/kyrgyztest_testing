@@ -15,16 +15,17 @@ public class ExamStartTests
     private readonly ICandidateRepository _candidateRepo = Substitute.For<ICandidateRepository>();
     private readonly IAttemptRepository _attemptRepo = Substitute.For<IAttemptRepository>();
     private readonly ISectionConfigRepository _sectionConfigRepo = Substitute.For<ISectionConfigRepository>();
-    private readonly ITestVariantGeneratorService _generator = Substitute.For<ITestVariantGeneratorService>();
+    private readonly ITestVariantRepository _variantRepo = Substitute.For<ITestVariantRepository>();
     private readonly ICandidateAnswerRepository _answerRepo = Substitute.For<ICandidateAnswerRepository>();
     private readonly IResultRepository _resultRepo = Substitute.For<IResultRepository>();
     private readonly ICompletedSectionRepository _completedSectionRepo = Substitute.For<ICompletedSectionRepository>();
     private readonly ISectionTimingRepository _sectionTimingRepo = Substitute.For<ISectionTimingRepository>();
+    private readonly IManualGradeRepository _manualGradeRepo = Substitute.For<IManualGradeRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private ExamService BuildService() => new(
         _candidateRepo, _attemptRepo, _sectionConfigRepo,
-        _generator, _answerRepo, _resultRepo, _completedSectionRepo, _sectionTimingRepo, _unitOfWork);
+        _variantRepo, _answerRepo, _resultRepo, _completedSectionRepo, _sectionTimingRepo, _manualGradeRepo, _unitOfWork);
 
     public ExamStartTests()
     {
@@ -46,7 +47,7 @@ public class ExamStartTests
 
         Assert.Equal(existingAttempt.Id, result.AttemptId);
         await _attemptRepo.DidNotReceive().AddAsync(Arg.Any<Attempt>());
-        await _generator.DidNotReceive().GenerateAsync();
+        await _variantRepo.DidNotReceive().GetRandomActiveAsync();
     }
 
     [Fact]
@@ -57,12 +58,25 @@ public class ExamStartTests
 
         _candidateRepo.GetByIdAsync(candidate.Id).Returns(candidate);
         _attemptRepo.GetActiveByCandidate(candidate.Id).Returns((Attempt?)null);
-        _generator.GenerateAsync().Returns(existingAttempt.TestVariant);
+        _variantRepo.GetRandomActiveAsync().Returns(existingAttempt.TestVariant);
 
         var result = await BuildService().StartAsync(candidate.Id);
 
         await _attemptRepo.Received(1).AddAsync(Arg.Any<Attempt>());
         Assert.NotEqual(Guid.Empty, result.AttemptId);
+    }
+
+    [Fact]
+    public async Task Start_ThrowsBusinessException_WhenNoActiveVariantsInPool()
+    {
+        var candidate = TestData.DefaultCandidate(Guid.NewGuid());
+
+        _candidateRepo.GetByIdAsync(candidate.Id).Returns(candidate);
+        _attemptRepo.GetActiveByCandidate(candidate.Id).Returns((Attempt?)null);
+        _variantRepo.GetRandomActiveAsync().Returns((TestVariant?)null);
+
+        await Assert.ThrowsAsync<BusinessException>(() => BuildService().StartAsync(candidate.Id));
+        await _attemptRepo.DidNotReceive().AddAsync(Arg.Any<Attempt>());
     }
 
     [Fact]

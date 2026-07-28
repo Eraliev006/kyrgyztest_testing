@@ -13,15 +13,18 @@ public class ResultService : IResultService
     private readonly IResultRepository _repository;
     private readonly IAttemptRepository _attemptRepository;
     private readonly ICandidateAnswerRepository _candidateAnswerRepository;
+    private readonly IManualGradeRepository _manualGradeRepository;
 
     public ResultService(
         IResultRepository repository,
         IAttemptRepository attemptRepository,
-        ICandidateAnswerRepository candidateAnswerRepository)
+        ICandidateAnswerRepository candidateAnswerRepository,
+        IManualGradeRepository manualGradeRepository)
     {
         _repository = repository;
         _attemptRepository = attemptRepository;
         _candidateAnswerRepository = candidateAnswerRepository;
+        _manualGradeRepository = manualGradeRepository;
     }
 
     public async Task<List<ResultWithCandidateDto>> GetAllAsync(Guid? organizationId, LanguageLevel? level, DateTime? dateFrom, DateTime? dateTo)
@@ -64,6 +67,8 @@ public class ResultService : IResultService
 
         var answers = await _candidateAnswerRepository.GetByAttemptIdAsync(attemptId);
         var answerMap = answers.ToDictionary(a => a.QuestionId);
+        var grades = await _manualGradeRepository.GetByAttemptIdAsync(attemptId);
+        var gradeMap = grades.ToDictionary(g => g.QuestionId, g => g.Score);
 
         var result = new AttemptDetailDto
         {
@@ -75,6 +80,23 @@ public class ResultService : IResultService
         {
             var question = tvq.Question;
             answerMap.TryGetValue(question.Id, out var candidateAnswer);
+
+            if (question.Type == QuestionType.OpenAnswer)
+            {
+                var hasGrade = gradeMap.TryGetValue(question.Id, out var manualScore);
+                result.Answers.Add(new AttemptAnswerDetailDto
+                {
+                    QuestionId = question.Id,
+                    Content = question.Content,
+                    Section = question.Section,
+                    Level = question.Level,
+                    Type = question.Type,
+                    AudioAnswerUrl = candidateAnswer?.AudioAnswerUrl,
+                    ManualScore = hasGrade ? manualScore : null,
+                    IsCorrect = hasGrade && manualScore > 0,
+                });
+                continue;
+            }
 
             var correctOption = question.AnswerOptions.FirstOrDefault(o => o.IsCorrect);
             var correctOrder = question.AnswerOptions
@@ -123,7 +145,9 @@ public class ResultService : IResultService
         ListeningScore = r.ListeningScore,
         ReadingScore = r.ReadingScore,
         WritingScore = r.WritingScore,
+        SpeakingScore = r.SpeakingScore,
         TotalScore = r.TotalScore,
+        StartedAt = r.Attempt.StartedAt,
         CreatedAt = r.CreatedAt
     };
 }

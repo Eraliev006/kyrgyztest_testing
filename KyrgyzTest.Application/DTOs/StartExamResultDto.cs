@@ -14,7 +14,6 @@ public class ExamSectionDto
     public SectionType Section { get; set; }
     public int TimeLimitMinutes { get; set; }
     public bool IsCompleted { get; set; }
-    /// <summary>Null until the candidate actually opens the section (StartSectionAsync).</summary>
     public DateTime? DeadlineUtc { get; set; }
     public List<ExamQuestionDto> Questions { get; set; } = new();
 }
@@ -31,6 +30,10 @@ public class ExamQuestionDto
     public string Content { get; set; } = string.Empty;
     public QuestionType Type { get; set; }
     public List<ExamAnswerOptionDto> AnswerOptions { get; set; } = new();
+
+    public Guid? SelectedOptionId { get; set; }
+    public string? OrderedAnswer { get; set; }
+    public string? AudioAnswerUrl { get; set; }
 }
 
 public class ExamAnswerOptionDto

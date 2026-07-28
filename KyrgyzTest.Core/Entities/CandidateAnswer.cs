@@ -9,4 +9,5 @@ public class CandidateAnswer
     public Question Question { get; set; } = null!;
     public Guid? SelectedOptionId { get; set; }
     public string? OrderedAnswer { get; set; }
+    public string? AudioAnswerUrl { get; set; }
 }

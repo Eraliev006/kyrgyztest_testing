@@ -20,9 +20,11 @@ public static class RepositoryExtension
         services.AddScoped<IResultRepository, ResultRepository>();
         services.AddScoped<ICompletedSectionRepository, CompletedSectionRepository>();
         services.AddScoped<ISectionTimingRepository, SectionTimingRepository>();
+        services.AddScoped<IManualGradeRepository, ManualGradeRepository>();
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         services.AddScoped<ITopicRepository, TopicRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddScoped<IPasswordResetRequestRepository, PasswordResetRequestRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;

@@ -12,12 +12,16 @@ public class ExamController : ControllerBase
     private readonly ICandidateService _candidateService;
     private readonly IConfiguration _configuration;
     private readonly IExamService _examService;
+    private readonly string _uploadPath;
 
     public ExamController(ICandidateService candidateService, IConfiguration configuration, IExamService examService)
     {
         _candidateService = candidateService;
         _configuration = configuration;
         _examService = examService;
+        _uploadPath = Path.Combine(AppContext.BaseDirectory, configuration["FileStorage:Path"]!);
+        if (!Directory.Exists(_uploadPath))
+            Directory.CreateDirectory(_uploadPath);
     }
 
     [HttpPost("unlock")]
@@ -89,6 +93,34 @@ public class ExamController : ControllerBase
     public async Task<IActionResult> SaveAnswer([FromBody] SaveAnswerDto dto)
     {
         await _examService.SaveAnswerAsync(dto);
+        return Ok();
+    }
+
+    [HttpPost("answer/audio")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> SaveAudioAnswer(
+        [FromForm] Guid attemptId, [FromForm] Guid questionId, IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("Файл пустой");
+
+        var allowed = new[] { ".mp3", ".wav", ".ogg", ".webm", ".m4a" };
+        var ext = Path.GetExtension(file.FileName).ToLower();
+        if (!allowed.Contains(ext))
+            return BadRequest("Только mp3, wav, ogg, webm, m4a");
+
+        var fileName = $"{Guid.NewGuid()}{ext}";
+        var filePath = Path.Combine(_uploadPath, fileName);
+        using (var stream = new FileStream(filePath, FileMode.Create))
+            await file.CopyToAsync(stream);
+
+        await _examService.SaveAnswerAsync(new SaveAnswerDto
+        {
+            AttemptId = attemptId,
+            QuestionId = questionId,
+            AudioAnswerUrl = $"/uploads/{fileName}"
+        });
+
         return Ok();
     }
 

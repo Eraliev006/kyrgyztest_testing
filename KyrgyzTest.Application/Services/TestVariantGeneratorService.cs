@@ -65,6 +65,7 @@ public class TestVariantGeneratorService : ITestVariantGeneratorService
             Id = Guid.NewGuid(),
             Number = maxNumber + 1,
             GeneratedAt = DateTime.UtcNow,
+            IsArchived = false,
             Questions = tvQuestions
         };
 

@@ -40,6 +40,18 @@ public class AuthService : IAuthService
         };
     }
 
+    public async Task ChangePasswordAsync(Guid userId, ChangePasswordDto dto)
+    {
+        var user = await _repository.GetById(userId)
+            ?? throw new NotFoundException("Пользователь не найден");
+
+        if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash))
+            throw new BusinessException("Неверный текущий пароль");
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        await _repository.Update(user);
+    }
+
     private string GenerateToken(Users user)
     {
         var key = new SymmetricSecurityKey(

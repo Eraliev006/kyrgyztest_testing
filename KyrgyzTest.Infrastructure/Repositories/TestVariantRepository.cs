@@ -21,10 +21,24 @@ public class TestVariantRepository : ITestVariantRepository
                     .ThenInclude(q => q.AnswerOptions)
             .FirstOrDefaultAsync(v => v.Id == id);
 
-    public async Task<List<TestVariant>> GetAllAsync()
+    public async Task<List<TestVariant>> GetAllAsync(bool includeArchived = false)
         => await _context.TestVariants
             .Include(v => v.Questions)
+            .Where(v => includeArchived || !v.IsArchived)
             .ToListAsync();
+
+    public async Task<TestVariant?> GetRandomActiveAsync()
+    {
+        var activeIds = await _context.TestVariants
+            .Where(v => !v.IsArchived)
+            .Select(v => v.Id)
+            .ToListAsync();
+
+        if (activeIds.Count == 0) return null;
+
+        var randomId = activeIds[Random.Shared.Next(activeIds.Count)];
+        return await GetByIdAsync(randomId);
+    }
 
     public async Task<int> GetMaxNumberAsync()
         => await _context.TestVariants.AnyAsync()
@@ -34,6 +48,12 @@ public class TestVariantRepository : ITestVariantRepository
     public async Task AddAsync(TestVariant variant)
     {
         _context.TestVariants.Add(variant);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteAsync(TestVariant variant)
+    {
+        _context.TestVariants.Remove(variant);
         await _context.SaveChangesAsync();
     }
 

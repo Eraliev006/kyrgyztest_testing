@@ -19,6 +19,7 @@ public class ResultsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "SuperAdmin,Director,Admin")]
     [ProducesResponseType(typeof(List<ResultWithCandidateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? organizationId,
@@ -31,6 +32,7 @@ public class ResultsController : ControllerBase
     }
 
     [HttpGet("{candidateId:guid}")]
+    [Authorize(Roles = "SuperAdmin,Director,Admin")]
     [ProducesResponseType(typeof(ResultWithCandidateDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByCandidate(Guid candidateId)
     {
@@ -48,6 +50,7 @@ public class ResultsController : ControllerBase
     }
 
     [HttpGet("stats")]
+    [Authorize(Roles = "SuperAdmin,Director,Admin")]
     [ProducesResponseType(typeof(OrgStatsDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats(
         [FromQuery] Guid? organizationId,

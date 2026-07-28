@@ -6,4 +6,5 @@ public class SaveAnswerDto
     public Guid QuestionId { get; set; }
     public Guid? SelectedOptionId { get; set; }
     public string? OrderedAnswer { get; set; }
+    public string? AudioAnswerUrl { get; set; }
 }

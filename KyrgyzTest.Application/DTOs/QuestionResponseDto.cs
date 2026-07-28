@@ -17,6 +17,7 @@ public record QuestionResponseDto
     public string? TopicName { get; set; }
     public List<AnswerOptionResponseDto> AnswerOptions { get; set; } = new();
     public DateTime CreatedAt { get; set; }
+    public int UsedInVariantCount { get; set; }
 }
 
 public record AnswerOptionResponseDto

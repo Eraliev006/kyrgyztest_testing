@@ -80,4 +80,16 @@ public class QuestionRepository : IQuestionRepository
             await _context.SaveChangesAsync();
         }
     }
+
+    public async Task<Dictionary<Guid, int>> GetVariantUsageCountsAsync(IEnumerable<Guid> questionIds)
+    {
+        var ids = questionIds.ToList();
+        if (ids.Count == 0) return new Dictionary<Guid, int>();
+
+        return await _context.TestVariantQuestions
+            .Where(tvq => ids.Contains(tvq.QuestionId) && !tvq.TestVariant.IsArchived)
+            .GroupBy(tvq => tvq.QuestionId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count);
+    }
 }

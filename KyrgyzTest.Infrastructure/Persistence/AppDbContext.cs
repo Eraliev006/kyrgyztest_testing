@@ -21,8 +21,10 @@ public class AppDbContext : DbContext
     public DbSet<Result> Results { get; set; }
     public DbSet<CompletedSection> CompletedSections { get; set; }
     public DbSet<SectionTiming> SectionTimings { get; set; }
+    public DbSet<ManualGrade> ManualGrades { get; set; }
     public DbSet<Topic> Topics { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<PasswordResetRequest> PasswordResetRequests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -129,6 +131,21 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(st => st.AttemptId);
 
+        modelBuilder.Entity<ManualGrade>()
+            .HasOne(g => g.Attempt)
+            .WithMany()
+            .HasForeignKey(g => g.AttemptId);
+
+        modelBuilder.Entity<ManualGrade>()
+            .HasOne(g => g.Question)
+            .WithMany()
+            .HasForeignKey(g => g.QuestionId);
+
+        modelBuilder.Entity<ManualGrade>()
+            .HasOne(g => g.GradedBy)
+            .WithMany()
+            .HasForeignKey(g => g.GradedByUserId);
+
         modelBuilder.Entity<Candidate>()
             .HasIndex(c => c.AccessCode)
             .IsUnique();
@@ -145,6 +162,10 @@ public class AppDbContext : DbContext
             .HasIndex(st => new { st.AttemptId, st.Section })
             .IsUnique();
 
+        modelBuilder.Entity<ManualGrade>()
+            .HasIndex(g => new { g.AttemptId, g.QuestionId })
+            .IsUnique();
+
         modelBuilder.Entity<CandidateAnswer>()
             .HasIndex(ca => new { ca.AttemptId, ca.QuestionId })
             .IsUnique();
@@ -152,6 +173,17 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Result>()
             .HasIndex(r => r.AttemptId)
             .IsUnique();
+
+        modelBuilder.Entity<PasswordResetRequest>()
+            .HasOne(r => r.User)
+            .WithMany()
+            .HasForeignKey(r => r.UserId);
+
+        modelBuilder.Entity<PasswordResetRequest>()
+            .HasOne(r => r.ReviewedBy)
+            .WithMany()
+            .HasForeignKey(r => r.ReviewedByUserId)
+            .IsRequired(false);
 
         base.OnModelCreating(modelBuilder);
     }

@@ -26,6 +26,7 @@ public class AttemptRepository : IAttemptRepository
 
     public async Task<Attempt?> GetByIdWithDetailsAsync(Guid id)
         => await _context.Attempts
+            .Include(a => a.Candidate)
             .Include(a => a.TestVariant)
                 .ThenInclude(tv => tv.Questions)
                     .ThenInclude(tvq => tvq.Question)
@@ -41,6 +42,15 @@ public class AttemptRepository : IAttemptRepository
             .Where(a => a.Status == AttemptStatus.InProgress)
             .ToListAsync();
 
+    public async Task<List<Attempt>> GetCompletedWithDetailsAsync()
+        => await _context.Attempts
+            .Include(a => a.Candidate)
+            .Include(a => a.TestVariant)
+                .ThenInclude(tv => tv.Questions)
+                    .ThenInclude(tvq => tvq.Question)
+            .Where(a => a.Status == AttemptStatus.Completed)
+            .ToListAsync();
+
     public async Task<Attempt> AddAsync(Attempt attempt)
     {
         _context.Attempts.Add(attempt);
@@ -53,4 +63,7 @@ public class AttemptRepository : IAttemptRepository
         _context.Attempts.Update(attempt);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<bool> ExistsByTestVariantIdAsync(Guid testVariantId)
+        => await _context.Attempts.AnyAsync(a => a.TestVariantId == testVariantId);
 }

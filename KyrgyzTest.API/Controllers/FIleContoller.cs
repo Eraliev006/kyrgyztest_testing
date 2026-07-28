@@ -1,3 +1,4 @@
+using KyrgyzTest.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,7 +14,7 @@ public class FileController : ControllerBase
     public FileController(IConfiguration configuration)
     {
         _uploadPath = Path.Combine(
-            Directory.GetCurrentDirectory(),
+            AppContext.BaseDirectory,
             configuration["FileStorage:Path"]!);
 
         if (!Directory.Exists(_uploadPath))
@@ -21,6 +22,8 @@ public class FileController : ControllerBase
     }
 
     [HttpPost("audio")]
+    [ProducesResponseType(typeof(UploadAudioResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UploadAudio(IFormFile file)
     {
         if (file == null || file.Length == 0)
@@ -38,6 +41,6 @@ public class FileController : ControllerBase
         using var stream = new FileStream(filePath, FileMode.Create);
         await file.CopyToAsync(stream);
 
-        return Ok(new { url = $"/uploads/{fileName}" });
+        return Ok(new UploadAudioResponseDto { Url = $"/uploads/{fileName}" });
     }
 }

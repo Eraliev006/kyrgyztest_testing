@@ -4,5 +4,6 @@ public enum QuestionType
 {
     MCQ,
     WordOrder,
-    SentenceOrder
+    SentenceOrder,
+    OpenAnswer
 }

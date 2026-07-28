@@ -13,20 +13,22 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _repository;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IAuditService _audit;
 
-    public UserService(IUserRepository repository, IHttpContextAccessor httpContextAccessor)
+    public UserService(IUserRepository repository, IHttpContextAccessor httpContextAccessor, IAuditService audit)
     {
         _repository = repository;
         _httpContextAccessor = httpContextAccessor;
+        _audit = audit;
     }
 
-    private void EnforceRoleCreationPolicy(UserRole targetRole)
+    private void EnforceRoleAccessPolicy(UserRole targetRole)
     {
         var roleClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Role)?.Value;
         if (Enum.TryParse<UserRole>(roleClaim, out var callerRole) && callerRole == UserRole.Director)
         {
             if (targetRole == UserRole.SuperAdmin || targetRole == UserRole.Director)
-                throw new BusinessException("Director не может создавать пользователей с ролью SuperAdmin или Director.");
+                throw new BusinessException("Director не может управлять пользователями с ролью SuperAdmin или Director.");
         }
     }
 
@@ -50,7 +52,7 @@ public class UserService : IUserService
 
     public async Task<UserResponseDto> Create(CreateUserDto dto)
     {
-        EnforceRoleCreationPolicy(dto.Role);
+        EnforceRoleAccessPolicy(dto.Role);
 
         var user = new Users
         {
@@ -63,30 +65,37 @@ public class UserService : IUserService
         };
 
         var created = await _repository.Create(user);
+        await _audit.LogAsync("CREATE", "User", created.Id, $"Создан сотрудник {created.FullName} ({created.Login}), роль {created.Role}");
         return Map(created);
     }
 
     public async Task<UserResponseDto> Update(Guid id, CreateUserDto dto)
     {
-        EnforceRoleCreationPolicy(dto.Role);
+        EnforceRoleAccessPolicy(dto.Role);
 
-        var user = await _repository.GetById(id);
-
-        if (user == null)
-            throw new Exception("User not found");
+        var user = await _repository.GetById(id)
+            ?? throw new NotFoundException("Пользователь не найден");
 
         user.FullName = dto.FullName;
         user.Login = dto.Login;
-        user.PasswordHash = Hash(dto.Password);
+        if (!string.IsNullOrWhiteSpace(dto.Password))
+            user.PasswordHash = Hash(dto.Password);
         user.Role = dto.Role;
 
         var updated = await _repository.Update(user);
+        await _audit.LogAsync("UPDATE", "User", updated.Id, $"Обновлён сотрудник {updated.FullName} ({updated.Login})");
         return Map(updated);
     }
 
     public async Task<UserResponseDto> Delete(Guid id)
     {
+        var user = await _repository.GetById(id)
+            ?? throw new NotFoundException("Пользователь не найден");
+
+        EnforceRoleAccessPolicy(user.Role);
+
         var deleted = await _repository.Delete(id);
+        await _audit.LogAsync("DELETE", "User", deleted.Id, $"Удалён сотрудник {deleted.FullName} ({deleted.Login})");
         return Map(deleted);
     }
 

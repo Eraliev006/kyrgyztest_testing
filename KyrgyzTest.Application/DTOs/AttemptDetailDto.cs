@@ -19,6 +19,8 @@ public class AttemptAnswerDetailDto
     public QuestionType Type { get; set; }
     public Guid? SelectedOptionId { get; set; }
     public string? OrderedAnswer { get; set; }
+    public string? AudioAnswerUrl { get; set; }
+    public int? ManualScore { get; set; }
     public bool IsCorrect { get; set; }
     public Guid? CorrectOptionId { get; set; }
     public Guid[]? CorrectOrder { get; set; }

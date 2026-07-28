@@ -43,6 +43,8 @@ public class CandidateController : ControllerBase
     }
 
     [HttpGet("search")]
+    [ProducesResponseType(typeof(CandidateResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Search([FromQuery] string? inn, [FromQuery] string? code, [FromQuery] string? fullName)
     {
         if (!string.IsNullOrEmpty(inn))
@@ -93,7 +95,7 @@ public class CandidateController : ControllerBase
     }
 
     [HttpPut("{id}/photo")]
-    [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(CandidateResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UploadPhoto(Guid id, [FromBody] UploadPhotoDto dto)
     {

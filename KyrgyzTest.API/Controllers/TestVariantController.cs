@@ -21,13 +21,26 @@ public class TestVariantController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(List<TestVariantSummaryDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll()
-        => Ok(await _service.GetAllAsync());
+    public async Task<IActionResult> GetAll([FromQuery] bool includeArchived = false)
+        => Ok(await _service.GetAllAsync(includeArchived));
 
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(TestVariantDetailDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetById(Guid id)
         => Ok(await _service.GetByIdAsync(id));
+
+    [HttpPost("generate")]
+    [ProducesResponseType(typeof(TestVariantSummaryDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Generate()
+        => Ok(await _service.GenerateAsync());
+
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        await _service.DeleteAsync(id);
+        return NoContent();
+    }
 
     [HttpGet("{id}/available-questions")]
     [ProducesResponseType(typeof(List<VariantQuestionDto>), StatusCodes.Status200OK)]

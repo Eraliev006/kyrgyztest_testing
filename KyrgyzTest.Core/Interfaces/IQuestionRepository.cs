@@ -12,4 +12,5 @@ public interface IQuestionRepository
     Task<Question> CreateAsync(Question question);
     Task<Question> UpdateAsync(Question question);
     Task DeleteAsync(Guid id);
+    Task<Dictionary<Guid, int>> GetVariantUsageCountsAsync(IEnumerable<Guid> questionIds);
 }

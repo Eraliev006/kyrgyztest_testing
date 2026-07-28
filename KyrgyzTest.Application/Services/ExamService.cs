@@ -13,32 +13,35 @@ public class ExamService : IExamService
     private readonly ICandidateRepository _candidateRepository;
     private readonly IAttemptRepository _attemptRepository;
     private readonly ISectionConfigRepository _sectionConfigRepository;
-    private readonly ITestVariantGeneratorService _generatorService;
+    private readonly ITestVariantRepository _testVariantRepository;
     private readonly ICandidateAnswerRepository _candidateAnswerRepository;
     private readonly IResultRepository _resultRepository;
     private readonly ICompletedSectionRepository _completedSectionRepository;
     private readonly ISectionTimingRepository _sectionTimingRepository;
+    private readonly IManualGradeRepository _manualGradeRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public ExamService(
         ICandidateRepository candidateRepository,
         IAttemptRepository attemptRepository,
         ISectionConfigRepository sectionConfigRepository,
-        ITestVariantGeneratorService generatorService,
+        ITestVariantRepository testVariantRepository,
         ICandidateAnswerRepository candidateAnswerRepository,
         IResultRepository resultRepository,
         ICompletedSectionRepository completedSectionRepository,
         ISectionTimingRepository sectionTimingRepository,
+        IManualGradeRepository manualGradeRepository,
         IUnitOfWork unitOfWork)
     {
         _candidateRepository = candidateRepository;
         _attemptRepository = attemptRepository;
         _sectionConfigRepository = sectionConfigRepository;
-        _generatorService = generatorService;
+        _testVariantRepository = testVariantRepository;
         _candidateAnswerRepository = candidateAnswerRepository;
         _resultRepository = resultRepository;
         _completedSectionRepository = completedSectionRepository;
         _sectionTimingRepository = sectionTimingRepository;
+        _manualGradeRepository = manualGradeRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -58,7 +61,8 @@ public class ExamService : IExamService
             return await BuildStartResultAsync(existing.Id, existing.TestVariant.Questions);
         }
 
-        var testVariant = await _generatorService.GenerateAsync();
+        var testVariant = await _testVariantRepository.GetRandomActiveAsync()
+            ?? throw new BusinessException("Нет доступных вариантов теста. Обратитесь к администратору.");
 
         var attempt = new Attempt
         {
@@ -111,19 +115,29 @@ public class ExamService : IExamService
 
         var timing = await _sectionTimingRepository.GetOrStartAsync(attemptId, section);
 
+        var existingAnswers = await _candidateAnswerRepository.GetByAttemptIdAsync(attemptId) ?? [];
+        var answerByQuestionId = existingAnswers.ToDictionary(a => a.QuestionId);
+
         var questions = attempt.TestVariant.Questions
             .Where(vq => vq.Question.Section == section)
             .OrderBy(vq => vq.OrderIndex)
-            .Select(vq => new ExamQuestionDto
+            .Select(vq =>
             {
-                Id = vq.Question.Id,
-                Content = vq.Question.Content,
-                Type = vq.Question.Type,
-                AnswerOptions = vq.Question.AnswerOptions.Select(ao => new ExamAnswerOptionDto
+                answerByQuestionId.TryGetValue(vq.Question.Id, out var existing);
+                return new ExamQuestionDto
                 {
-                    Id = ao.Id,
-                    Content = ao.Content
-                }).ToList()
+                    Id = vq.Question.Id,
+                    Content = vq.Question.Content,
+                    Type = vq.Question.Type,
+                    AnswerOptions = vq.Question.AnswerOptions.Select(ao => new ExamAnswerOptionDto
+                    {
+                        Id = ao.Id,
+                        Content = ao.Content
+                    }).ToList(),
+                    SelectedOptionId = existing?.SelectedOptionId,
+                    OrderedAnswer = existing?.OrderedAnswer,
+                    AudioAnswerUrl = existing?.AudioAnswerUrl
+                };
             }).ToList();
 
         return new ExamSectionDto
@@ -201,54 +215,59 @@ public class ExamService : IExamService
             AttemptId = dto.AttemptId,
             QuestionId = dto.QuestionId,
             SelectedOptionId = dto.SelectedOptionId,
-            OrderedAnswer = dto.OrderedAnswer
+            OrderedAnswer = dto.OrderedAnswer,
+            AudioAnswerUrl = dto.AudioAnswerUrl
         };
 
         await _candidateAnswerRepository.UpsertAsync(answer);
     }
 
-    public async Task<ResultResponseDto> SubmitAsync(Guid attemptId)
+    private async Task<(int Grammar, int Listening, int Reading, int Writing, int Speaking, int Total, LanguageLevel Level)>
+        ComputeScoreAsync(Attempt attempt)
     {
-        var attempt = await _attemptRepository.GetByIdWithDetailsAsync(attemptId)
-            ?? throw new NotFoundException($"Попытка {attemptId} не найдена");
-
-        // Idempotency: if Result already exists, finish any partial cleanup and return it.
-        var existingResult = await _resultRepository.GetByAttemptIdAsync(attemptId);
-        if (existingResult != null)
-            return await FinishCleanupAndMapAsync(attempt, existingResult);
-
-        if (attempt.Status != AttemptStatus.InProgress)
-            throw new BusinessException("Попытка не активна");
-
-        var answers = await _candidateAnswerRepository.GetByAttemptIdAsync(attemptId);
+        var answers = await _candidateAnswerRepository.GetByAttemptIdAsync(attempt.Id);
         var answerMap = answers.ToDictionary(a => a.QuestionId);
+        var grades = await _manualGradeRepository.GetByAttemptIdAsync(attempt.Id);
+        var gradeMap = grades.ToDictionary(g => g.QuestionId, g => g.Score);
 
-        int grammarScore = 0, listeningScore = 0, readingScore = 0, writingScore = 0;
-        int totalQuestions = attempt.TestVariant.Questions.Count;
+        int grammarScore = 0, listeningScore = 0, readingScore = 0, writingScore = 0, speakingScore = 0;
+        int maxPossiblePoints = 0;
 
         foreach (var tvq in attempt.TestVariant.Questions)
         {
             var question = tvq.Question;
-            if (!answerMap.TryGetValue(question.Id, out var candidateAnswer))
-                continue;
+            maxPossiblePoints += question.Type == QuestionType.OpenAnswer ? 5 : 1;
 
-            bool isCorrect = question.Type == QuestionType.MCQ
-                ? ScoringHelper.IsCorrectMcq(question, candidateAnswer)
-                : ScoringHelper.IsCorrectOrdered(question, candidateAnswer);
+            int points;
+            if (question.Type == QuestionType.OpenAnswer)
+            {
+                points = gradeMap.GetValueOrDefault(question.Id);
+            }
+            else
+            {
+                if (!answerMap.TryGetValue(question.Id, out var candidateAnswer))
+                    continue;
 
-            if (!isCorrect) continue;
+                bool isCorrect = question.Type == QuestionType.MCQ
+                    ? ScoringHelper.IsCorrectMcq(question, candidateAnswer)
+                    : ScoringHelper.IsCorrectOrdered(question, candidateAnswer);
+                points = isCorrect ? 1 : 0;
+            }
+
+            if (points == 0) continue;
 
             switch (question.Section)
             {
-                case SectionType.Grammar: grammarScore++; break;
-                case SectionType.Listening: listeningScore++; break;
-                case SectionType.Reading: readingScore++; break;
-                case SectionType.Writing: writingScore++; break;
+                case SectionType.Grammar: grammarScore += points; break;
+                case SectionType.Listening: listeningScore += points; break;
+                case SectionType.Reading: readingScore += points; break;
+                case SectionType.Writing: writingScore += points; break;
+                case SectionType.Speaking: speakingScore += points; break;
             }
         }
 
-        int totalScore = grammarScore + listeningScore + readingScore + writingScore;
-        double percentage = totalQuestions > 0 ? (double)totalScore / totalQuestions : 0;
+        int totalScore = grammarScore + listeningScore + readingScore + writingScore + speakingScore;
+        double percentage = maxPossiblePoints > 0 ? (double)totalScore / maxPossiblePoints : 0;
 
         var level = percentage switch
         {
@@ -258,17 +277,54 @@ public class ExamService : IExamService
             _ => LanguageLevel.B2
         };
 
+        return (grammarScore, listeningScore, readingScore, writingScore, speakingScore, totalScore, level);
+    }
+
+    public async Task RecomputeResultAsync(Guid attemptId)
+    {
+        var attempt = await _attemptRepository.GetByIdWithDetailsAsync(attemptId)
+            ?? throw new NotFoundException($"Попытка {attemptId} не найдена");
+        var result = await _resultRepository.GetByAttemptIdAsync(attemptId)
+            ?? throw new NotFoundException($"Результат для попытки {attemptId} ещё не создан");
+
+        var scores = await ComputeScoreAsync(attempt);
+        result.Level = scores.Level;
+        result.GrammarScore = scores.Grammar;
+        result.ListeningScore = scores.Listening;
+        result.ReadingScore = scores.Reading;
+        result.WritingScore = scores.Writing;
+        result.SpeakingScore = scores.Speaking;
+        result.TotalScore = scores.Total;
+
+        await _resultRepository.UpdateAsync(result);
+    }
+
+    public async Task<ResultResponseDto> SubmitAsync(Guid attemptId)
+    {
+        var attempt = await _attemptRepository.GetByIdWithDetailsAsync(attemptId)
+            ?? throw new NotFoundException($"Попытка {attemptId} не найдена");
+
+        var existingResult = await _resultRepository.GetByAttemptIdAsync(attemptId);
+        if (existingResult != null)
+            return await FinishCleanupAndMapAsync(attempt, existingResult);
+
+        if (attempt.Status != AttemptStatus.InProgress)
+            throw new BusinessException("Попытка не активна");
+
+        var scores = await ComputeScoreAsync(attempt);
+
         var result = new Result
         {
             Id = Guid.NewGuid(),
             AttemptId = attemptId,
             CandidateId = attempt.CandidateId,
-            Level = level,
-            GrammarScore = grammarScore,
-            ListeningScore = listeningScore,
-            ReadingScore = readingScore,
-            WritingScore = writingScore,
-            TotalScore = totalScore,
+            Level = scores.Level,
+            GrammarScore = scores.Grammar,
+            ListeningScore = scores.Listening,
+            ReadingScore = scores.Reading,
+            WritingScore = scores.Writing,
+            SpeakingScore = scores.Speaking,
+            TotalScore = scores.Total,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -335,6 +391,7 @@ public class ExamService : IExamService
         ListeningScore = r.ListeningScore,
         ReadingScore = r.ReadingScore,
         WritingScore = r.WritingScore,
+        SpeakingScore = r.SpeakingScore,
         TotalScore = r.TotalScore,
         CreatedAt = r.CreatedAt
     };

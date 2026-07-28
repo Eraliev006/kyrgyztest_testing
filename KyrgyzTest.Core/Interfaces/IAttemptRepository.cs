@@ -8,6 +8,8 @@ public interface IAttemptRepository
     Task<List<Attempt>> GetAllActiveByCandidate(Guid candidateId);
     Task<Attempt?> GetByIdWithDetailsAsync(Guid id);
     Task<List<Attempt>> GetAllActiveWithDetailsAsync();
+    Task<List<Attempt>> GetCompletedWithDetailsAsync();
     Task<Attempt> AddAsync(Attempt attempt);
     Task UpdateAsync(Attempt attempt);
+    Task<bool> ExistsByTestVariantIdAsync(Guid testVariantId);
 }

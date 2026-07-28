@@ -6,4 +6,5 @@ public class TestVariantSummaryDto
     public int Number { get; set; }
     public DateTime GeneratedAt { get; set; }
     public int QuestionCount { get; set; }
+    public bool IsArchived { get; set; }
 }

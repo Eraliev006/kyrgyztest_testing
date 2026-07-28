@@ -169,6 +169,9 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.Property<Guid>("AttemptId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AudioAnswerUrl")
+                        .HasColumnType("text");
+
                     b.Property<string>("OrderedAnswer")
                         .HasColumnType("text");
 
@@ -211,6 +214,39 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.ToTable("CompletedSections");
                 });
 
+            modelBuilder.Entity("KyrgyzTest.Core.Entities.ManualGrade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AttemptId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("GradedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GradedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GradedByUserId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex("AttemptId", "QuestionId")
+                        .IsUnique();
+
+                    b.ToTable("ManualGrades");
+                });
+
             modelBuilder.Entity("KyrgyzTest.Core.Entities.MediaGroup", b =>
                 {
                     b.Property<Guid>("Id")
@@ -250,6 +286,40 @@ namespace KyrgyzTest.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Organizations");
+                });
+
+            modelBuilder.Entity("KyrgyzTest.Core.Entities.PasswordResetRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("NewPasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewedByUserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PasswordResetRequests");
                 });
 
             modelBuilder.Entity("KyrgyzTest.Core.Entities.Question", b =>
@@ -317,6 +387,9 @@ namespace KyrgyzTest.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("ReadingScore")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SpeakingScore")
                         .HasColumnType("integer");
 
                     b.Property<int>("TotalScore")
@@ -398,6 +471,9 @@ namespace KyrgyzTest.Infrastructure.Migrations
 
                     b.Property<DateTime>("GeneratedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("Number")
                         .HasColumnType("integer");
@@ -609,6 +685,50 @@ namespace KyrgyzTest.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Attempt");
+                });
+
+            modelBuilder.Entity("KyrgyzTest.Core.Entities.ManualGrade", b =>
+                {
+                    b.HasOne("KyrgyzTest.Core.Entities.Attempt", "Attempt")
+                        .WithMany()
+                        .HasForeignKey("AttemptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KyrgyzTest.Core.Entities.Users", "GradedBy")
+                        .WithMany()
+                        .HasForeignKey("GradedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KyrgyzTest.Core.Entities.Question", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Attempt");
+
+                    b.Navigation("GradedBy");
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("KyrgyzTest.Core.Entities.PasswordResetRequest", b =>
+                {
+                    b.HasOne("KyrgyzTest.Core.Entities.Users", "ReviewedBy")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId");
+
+                    b.HasOne("KyrgyzTest.Core.Entities.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ReviewedBy");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("KyrgyzTest.Core.Entities.Question", b =>

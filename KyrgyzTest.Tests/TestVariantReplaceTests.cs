@@ -13,9 +13,11 @@ public class TestVariantReplaceTests
 {
     private readonly ITestVariantRepository _variantRepo = Substitute.For<ITestVariantRepository>();
     private readonly IQuestionRepository _questionRepo = Substitute.For<IQuestionRepository>();
+    private readonly IAttemptRepository _attemptRepo = Substitute.For<IAttemptRepository>();
+    private readonly ITestVariantGeneratorService _generator = Substitute.For<ITestVariantGeneratorService>();
     private readonly IAuditService _audit = Substitute.For<IAuditService>();
 
-    private TestVariantService BuildService() => new(_variantRepo, _questionRepo, _audit);
+    private TestVariantService BuildService() => new(_variantRepo, _questionRepo, _attemptRepo, _generator, _audit);
 
     private static (TestVariant variant, Question oldQuestion) BuildVariantWithQuestion(
         SectionType section = SectionType.Grammar,
@@ -187,5 +189,37 @@ public class TestVariantReplaceTests
 
         await Assert.ThrowsAsync<NotFoundException>(
             () => BuildService().ReplaceQuestionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task Delete_NoAttempts_RemovesVariant()
+    {
+        var (variant, _) = BuildVariantWithQuestion();
+        _variantRepo.GetByIdAsync(variant.Id).Returns(variant);
+        _attemptRepo.ExistsByTestVariantIdAsync(variant.Id).Returns(false);
+
+        await BuildService().DeleteAsync(variant.Id);
+
+        await _variantRepo.Received(1).DeleteAsync(variant);
+    }
+
+    [Fact]
+    public async Task Delete_HasAttempts_Throws_BusinessException_AndDoesNotDelete()
+    {
+        var (variant, _) = BuildVariantWithQuestion();
+        _variantRepo.GetByIdAsync(variant.Id).Returns(variant);
+        _attemptRepo.ExistsByTestVariantIdAsync(variant.Id).Returns(true);
+
+        await Assert.ThrowsAsync<BusinessException>(() => BuildService().DeleteAsync(variant.Id));
+
+        await _variantRepo.DidNotReceive().DeleteAsync(Arg.Any<TestVariant>());
+    }
+
+    [Fact]
+    public async Task Delete_VariantNotFound_Throws_NotFoundException()
+    {
+        _variantRepo.GetByIdAsync(Arg.Any<Guid>()).Returns((TestVariant?)null);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => BuildService().DeleteAsync(Guid.NewGuid()));
     }
 }

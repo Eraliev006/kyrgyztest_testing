@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using KyrgyzTest.Application.DTOs;
 using KyrgyzTest.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KyrgyzTest.API.Controllers;
@@ -21,5 +23,15 @@ public class AuthController : ControllerBase
     {
         var result = await _authService.LoginUser(dto);
         return Ok(result);
+    }
+
+    [HttpPut("change-password")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        await _authService.ChangePasswordAsync(userId, dto);
+        return NoContent();
     }
 }

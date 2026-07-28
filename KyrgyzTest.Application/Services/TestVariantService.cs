@@ -11,25 +11,61 @@ public class TestVariantService : ITestVariantService
 {
     private readonly ITestVariantRepository _variantRepo;
     private readonly IQuestionRepository _questionRepo;
+    private readonly IAttemptRepository _attemptRepo;
+    private readonly ITestVariantGeneratorService _generatorService;
     private readonly IAuditService _audit;
 
-    public TestVariantService(ITestVariantRepository variantRepo, IQuestionRepository questionRepo, IAuditService audit)
+    public TestVariantService(
+        ITestVariantRepository variantRepo,
+        IQuestionRepository questionRepo,
+        IAttemptRepository attemptRepo,
+        ITestVariantGeneratorService generatorService,
+        IAuditService audit)
     {
         _variantRepo = variantRepo;
         _questionRepo = questionRepo;
+        _attemptRepo = attemptRepo;
+        _generatorService = generatorService;
         _audit = audit;
     }
 
-    public async Task<List<TestVariantSummaryDto>> GetAllAsync()
+    public async Task<List<TestVariantSummaryDto>> GetAllAsync(bool includeArchived = false)
     {
-        var variants = await _variantRepo.GetAllAsync();
+        var variants = await _variantRepo.GetAllAsync(includeArchived);
         return variants.Select(v => new TestVariantSummaryDto
         {
             Id = v.Id,
             Number = v.Number,
             GeneratedAt = v.GeneratedAt,
-            QuestionCount = v.Questions.Count
+            QuestionCount = v.Questions.Count,
+            IsArchived = v.IsArchived
         }).ToList();
+    }
+
+    public async Task<TestVariantSummaryDto> GenerateAsync()
+    {
+        var variant = await _generatorService.GenerateAsync();
+        await _audit.LogAsync("GENERATE", "TestVariant", variant.Id, $"Сгенерирован вариант №{variant.Number}");
+        return new TestVariantSummaryDto
+        {
+            Id = variant.Id,
+            Number = variant.Number,
+            GeneratedAt = variant.GeneratedAt,
+            QuestionCount = variant.Questions.Count,
+            IsArchived = variant.IsArchived
+        };
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        var variant = await _variantRepo.GetByIdAsync(id)
+            ?? throw new NotFoundException("Вариант не найден");
+
+        if (await _attemptRepo.ExistsByTestVariantIdAsync(id))
+            throw new BusinessException("Нельзя удалить вариант — по нему уже есть попытки кандидатов. Можно только архивировать.");
+
+        await _variantRepo.DeleteAsync(variant);
+        await _audit.LogAsync("DELETE", "TestVariant", id, $"Удалён вариант №{variant.Number}");
     }
 
     public async Task<TestVariantDetailDto> GetByIdAsync(Guid id)

@@ -14,6 +14,7 @@ public class Result
     public int ListeningScore { get; set; }
     public int ReadingScore { get; set; }
     public int WritingScore { get; set; }
+    public int SpeakingScore { get; set; }
     public int TotalScore { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
