@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
     public DbSet<Topic> Topics { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<PasswordResetRequest> PasswordResetRequests { get; set; }
+    public DbSet<ExamAccessSettings> ExamAccessSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -183,6 +184,12 @@ public class AppDbContext : DbContext
             .HasOne(r => r.ReviewedBy)
             .WithMany()
             .HasForeignKey(r => r.ReviewedByUserId)
+            .IsRequired(false);
+
+        modelBuilder.Entity<ExamAccessSettings>()
+            .HasOne(s => s.UpdatedBy)
+            .WithMany()
+            .HasForeignKey(s => s.UpdatedByUserId)
             .IsRequired(false);
 
         base.OnModelCreating(modelBuilder);

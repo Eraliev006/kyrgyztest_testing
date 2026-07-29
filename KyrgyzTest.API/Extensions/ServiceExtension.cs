@@ -23,6 +23,7 @@ public static class ServiceExtension
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<IExaminerService, ExaminerService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
+        services.AddScoped<IExamAccessSettingsService, ExamAccessSettingsService>();
         services.AddHttpContextAccessor();
         return services;
     }

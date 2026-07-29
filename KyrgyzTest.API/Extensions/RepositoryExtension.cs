@@ -25,6 +25,7 @@ public static class RepositoryExtension
         services.AddScoped<ITopicRepository, TopicRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IPasswordResetRequestRepository, PasswordResetRequestRepository>();
+        services.AddScoped<IExamAccessSettingsRepository, ExamAccessSettingsRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;

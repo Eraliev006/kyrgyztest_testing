@@ -103,6 +103,17 @@ using (var scope = app.Services.CreateScope())
             if (retries == 0) throw;
         }
     }
+
+    if (!context.ExamAccessSettings.Any())
+    {
+        context.ExamAccessSettings.Add(new KyrgyzTest.Core.Entities.ExamAccessSettings
+        {
+            Id = Guid.NewGuid(),
+            AccessPassword = builder.Configuration["ExamSettings:AccessPassword"]!,
+            UpdatedAt = DateTime.UtcNow
+        });
+        await context.SaveChangesAsync();
+    }
 }
 
 app.UseSwagger();

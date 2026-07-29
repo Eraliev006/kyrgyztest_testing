@@ -12,13 +12,19 @@ public class ExamController : ControllerBase
     private readonly ICandidateService _candidateService;
     private readonly IConfiguration _configuration;
     private readonly IExamService _examService;
+    private readonly IExamAccessSettingsService _accessSettingsService;
     private readonly string _uploadPath;
 
-    public ExamController(ICandidateService candidateService, IConfiguration configuration, IExamService examService)
+    public ExamController(
+        ICandidateService candidateService,
+        IConfiguration configuration,
+        IExamService examService,
+        IExamAccessSettingsService accessSettingsService)
     {
         _candidateService = candidateService;
         _configuration = configuration;
         _examService = examService;
+        _accessSettingsService = accessSettingsService;
         _uploadPath = Path.Combine(AppContext.BaseDirectory, configuration["FileStorage:Path"]!);
         if (!Directory.Exists(_uploadPath))
             Directory.CreateDirectory(_uploadPath);
@@ -27,10 +33,10 @@ public class ExamController : ControllerBase
     [HttpPost("unlock")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public IActionResult Unlock([FromBody] UnlockDto dto)
+    public async Task<IActionResult> Unlock([FromBody] UnlockDto dto)
     {
-        var password = _configuration["ExamSettings:AccessPassword"];
-        if (dto.Password != password)
+        var settings = await _accessSettingsService.GetAsync();
+        if (dto.Password != settings.AccessPassword)
             return Unauthorized("Неверный пароль");
 
         return Ok("Доступ открыт");
