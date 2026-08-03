@@ -131,7 +131,7 @@ public class CandidateController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "SuperAdmin,Director,Admin")]
+    [Authorize(Roles = "SuperAdmin,Director")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Delete(Guid id)
     {
